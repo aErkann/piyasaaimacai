@@ -152,12 +152,21 @@ app.post('/api/vip/create-payment', async (req, res) => {
       extra: JSON.stringify({ plan: 'monthly', deviceId: deviceId || '', timestamp: Date.now() }),
     };
 
-    let body, statusCode;
+    const shopierPayload = {
+      title: productPayload.product_name,
+      description: 'PiyasaAI VIP Üyelik (1 Ay) - Otomatik',
+      price: productPayload.product_price,
+      currency: productPayload.product_currency,
+      stock: 999,
+      images: [],
+    };
+
+    let body;
     try {
-      body = await httpsRequest('www.shopier.com', '/api/v1/product', 'POST', {
+      body = await httpsRequest('api.shopier.com', '/v1/products', 'POST', {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${pat}`,
-      }, JSON.stringify(productPayload));
+      }, JSON.stringify(shopierPayload));
     } catch (fetchErr) {
       console.error('[Shopier] Request error:', fetchErr.message);
       return res.status(500).json({ success: false, error: 'Shopier bağlantı hatası: ' + fetchErr.message });
@@ -165,8 +174,10 @@ app.post('/api/vip/create-payment', async (req, res) => {
 
     let data;
     try { data = JSON.parse(body); } catch { data = { raw: body.substring(0, 500) }; }
-    if (data.payment_url) {
-      res.json({ success: true, payment_url: data.payment_url });
+    if (data.paymentUrl || data.payment_url) {
+      res.json({ success: true, payment_url: data.paymentUrl || data.payment_url });
+    } else if (data.url) {
+      res.json({ success: true, payment_url: data.url });
     } else {
       res.status(400).json({ success: false, error: data.message || data.error || 'Shopier hatası', detail: data });
     }
