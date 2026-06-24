@@ -11,7 +11,7 @@ SIZES = {
     'xxxhdpi': 192,
 }
 
-SRC = 'new-icon.png'
+SRC = 'piyasaai_ma_ai_app_icon.png'
 BASE = 'android/app/src/main/res'
 SRC_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), SRC)
 if not os.path.exists(SRC_PATH):

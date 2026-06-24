@@ -1623,6 +1623,34 @@
     const newsData = []
     const resultsData = []
     const trapData = []
+    const weeklyData = []
+
+    const marketCopy = {
+      all:["Alpha Radar","AI ile taranan piyasa sinyalleri"],
+      bull:["Boğa Adayı","Yükseliş potansiyeli yüksek varlıklar"],
+      bear:["Düşüş Riski","Düşüş sinyali güçlü varlıklar"],
+      newcrypto:["Yeni Kripto","Yeni listelenen kripto paralar"],
+      ipo:["Yeni Hisse","Halka arz ve yeni hisseler"],
+      local:["Yerli Fırsat","BIST yerli fırsat sinyalleri"],
+      watch:["Takip Listesi","Takibe aldığın varlıklar"]
+    }
+    const trapCopy = {
+      all:["Tüm Tuzaklar","AI ile tespit edilen tuzak sinyalleri"],
+      market:["Piyasa Tuzakları","Piyasa bazlı tuzak sinyalleri"],
+      match:["Maç Tuzakları","Maç bazlı tuzak sinyalleri"],
+      quiet:["Sessiz Boğa","Sessiz yükselen potansiyel varlıklar"],
+      pump:["Riskli Pump","Riskli pompa sinyalleri"],
+      odds:["Değer Tuzağı","Değer tuzağı analizleri"],
+      lineup:["11 Tuzağı","Maç kadro tuzakları"],
+      live:["Canlı Tuzak","Canlı maç tuzak sinyalleri"]
+    }
+    const weeklyCopy = {
+      all:["7 Gün","Haftalık performans raporu"],
+      hit:["Tutanlar","Tahmini tutan maçlar"],
+      miss:["Kaçanlar","Tahmini kaçan maçlar"],
+      partial:["Kısmi Tutan","Kısmi gerçekleşen tahminler"],
+      league:["Lig Özeti","Lig bazlı haftalık özet"]
+    }
 
     const state = {
       page:"market",
@@ -2460,7 +2488,7 @@
         if (news && news.length) { newsData.length = 0; newsData.push(...news); }
         if (results && results.length) { resultsData.length = 0; resultsData.push(...results); }
       } catch (e) { console.error('API load error:', e); }
-      renderAll();
+      try { renderAll(); } catch (e) { console.error('Render error:', e); }
       hideLoading();
     }
 
