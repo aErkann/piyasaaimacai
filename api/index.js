@@ -33,7 +33,7 @@ function setConfig(data) {
 
 // ===== Admin auth =====
 const ADMIN_USER = process.env.ADMIN_USER || 'admin';
-const ADMIN_PASS = process.env.ADMIN_PASS || 'admin123';
+const ADMIN_PASS = process.env.ADMIN_PASS || 'Er09kan06.';
 
 // ===== VIP data store (JSON file fallback, no DB needed) =====
 const VIP_FILE = join(ROOT, 'backend', 'vips.json');
