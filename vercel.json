@@ -1,4 +1,8 @@
 {
-  "outputDirectory": ".",
-  "ignoreCommand": "echo 'ignoring backend, node_modules, android'"
+  "buildCommand": "mkdir -p public && cp src/index.html public/index.html && cp privacy-policy.html public/ && mkdir -p public/admin && cp admin/index.html public/admin/",
+  "outputDirectory": "public",
+  "rewrites": [
+    { "source": "/admin/:match*", "destination": "/admin/index.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
