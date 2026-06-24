@@ -89,6 +89,19 @@ app.get('/api/admin/price', (req, res) => {
   }
 });
 
+// ===== Debug: env check =====
+app.get('/api/debug', (req, res) => {
+  const pat = process.env.SHOPIER_PAT || '';
+  res.json({
+    hasPat: !!pat,
+    patLen: pat.length,
+    patStart: pat.substring(0, 15),
+    hasUrl: !!process.env.VERCEL_URL,
+    url: process.env.VERCEL_URL || 'not set',
+    node: process.version,
+  });
+});
+
 // ===== Shopier ödeme oluşturma =====
 app.post('/api/vip/create-payment', async (req, res) => {
   try {
@@ -114,14 +127,20 @@ app.post('/api/vip/create-payment', async (req, res) => {
       extra: JSON.stringify({ plan: 'monthly', deviceId: deviceId || '', timestamp: Date.now() }),
     };
 
-    const resp = await fetch('https://www.shopier.com/api/v1/product', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${pat}`,
-      },
-      body: JSON.stringify(productPayload),
-    });
+    let resp;
+    try {
+      resp = await fetch('https://www.shopier.com/api/v1/product', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${pat}`,
+        },
+        body: JSON.stringify(productPayload),
+      });
+    } catch (fetchErr) {
+      console.error('[Shopier] Fetch error:', fetchErr.message);
+      return res.status(500).json({ success: false, error: 'Shopier bağlantı hatası: ' + fetchErr.message });
+    }
 
     const text = await resp.text();
     let data;
@@ -132,6 +151,7 @@ app.post('/api/vip/create-payment', async (req, res) => {
       res.status(400).json({ success: false, error: data.message || 'Shopier hatası', detail: data });
     }
   } catch (e) {
+    console.error('[Shopier] Unhandled error:', e.message);
     res.status(500).json({ success: false, error: e.message });
   }
 });
