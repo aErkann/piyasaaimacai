@@ -4,7 +4,7 @@
     "module": "ES2020",
     "moduleResolution": "bundler",
     "outDir": "./src/api",
-    "rootDir": "./api",
+    "rootDir": "./src/api/ts",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -13,6 +13,6 @@
     "sourceMap": true,
     "types": ["node"]
   },
-  "include": ["api/**/*"],
+  "include": ["src/api/ts/**/*"],
   "exclude": ["node_modules"]
 }

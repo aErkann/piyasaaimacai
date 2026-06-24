@@ -1,4 +1,5 @@
 {
+  "buildCommand": "",
   "rewrites": [
     { "source": "/(.*)", "destination": "/piyasaai_macai_tuzakradar_v8.html" }
   ]
