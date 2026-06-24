@@ -10,7 +10,13 @@ function httpsRequest(host, path, method, headers, body) {
     const req = https.request(opts, (res) => {
       let data = '';
       res.on('data', chunk => data += chunk);
-      res.on('end', () => resolve(data));
+      res.on('end', () => {
+        if (res.statusCode >= 400) {
+          reject(new Error(`HTTP ${res.statusCode}: ${data.substring(0, 200)}`));
+        } else {
+          resolve(data);
+        }
+      });
     });
     req.on('error', reject);
     if (body) req.write(body);
@@ -141,7 +147,7 @@ app.post('/api/vip/create-payment', async (req, res) => {
       extra: JSON.stringify({ plan: 'monthly', deviceId: deviceId || '', timestamp: Date.now() }),
     };
 
-    let body;
+    let body, statusCode;
     try {
       body = await httpsRequest('www.shopier.com', '/api/v1/product', 'POST', {
         'Content-Type': 'application/json',
@@ -153,11 +159,11 @@ app.post('/api/vip/create-payment', async (req, res) => {
     }
 
     let data;
-    try { data = JSON.parse(body); } catch { data = { raw: body }; }
+    try { data = JSON.parse(body); } catch { data = { raw: body.substring(0, 500) }; }
     if (data.payment_url) {
       res.json({ success: true, payment_url: data.payment_url });
     } else {
-      res.status(400).json({ success: false, error: data.message || 'Shopier hatası', detail: data });
+      res.status(400).json({ success: false, error: data.message || data.error || 'Shopier hatası', detail: data });
     }
   } catch (e) {
     console.error('[Shopier] Unhandled error:', e.message);
