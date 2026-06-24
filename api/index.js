@@ -2,7 +2,10 @@
 const express = require('express');
 const { readFileSync, writeFileSync, existsSync } = require('fs');
 const { join } = require('path');
-const fetch = require('node-fetch');
+// Use global fetch if available (Node 18+), otherwise node-fetch
+let _fetch;
+try { _fetch = globalThis.fetch; } catch { _fetch = require('node-fetch'); }
+const fetch = _fetch;
 
 const app = express();
 app.use(express.json());
@@ -294,6 +297,12 @@ app.get('/api/vip/check', (req, res) => {
 // ===== Health check =====
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('[Express] Unhandled error:', err?.message || err);
+  res.status(500).json({ success: false, error: 'Internal server error' });
 });
 
 // ===== Vercel export =====
