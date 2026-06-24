@@ -109,7 +109,7 @@ app.get('/api/admin/price', (req, res) => {
   }
 });
 
-// ===== Debug: env check =====
+// ===== Debug endpoints =====
 app.get('/api/debug', (req, res) => {
   const pat = process.env.SHOPIER_PAT || '';
   res.json({
@@ -119,7 +119,12 @@ app.get('/api/debug', (req, res) => {
     hasUrl: !!process.env.VERCEL_URL,
     url: process.env.VERCEL_URL || 'not set',
     node: process.version,
+    cwd: process.cwd(),
   });
+});
+
+app.post('/api/debug', (req, res) => {
+  res.json({ method: 'POST', body: req.body });
 });
 
 // ===== Shopier ödeme oluşturma =====
