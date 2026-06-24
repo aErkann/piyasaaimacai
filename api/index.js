@@ -136,19 +136,13 @@ app.post('/api/vip/create-payment', async (req, res) => {
       const flow = new ShopierPaymentFlow({ pat });
       const result = await flow.createPaymentLink({
         title: productPayload.product_name,
-        price: productPayload.product_price,
+        amount: productPayload.product_price,
         currency: productPayload.product_currency,
-        buyerName: productPayload.buyer_name,
-        buyerEmail: productPayload.buyer_email,
-        buyerPhone: productPayload.buyer_phone,
+        stockQuantity: 999,
         orderId: 'vip-' + Date.now(),
-        callbackUrl: productPayload.callback_url,
-        extra: productPayload.extra,
       });
       if (result.paymentUrl) {
         res.json({ success: true, payment_url: result.paymentUrl });
-      } else if (result.checkoutHtml) {
-        res.json({ success: true, checkout_html: result.checkoutHtml, payment_url: result.paymentUrl });
       } else {
         res.status(400).json({ success: false, error: 'Shopier ödeme bağlantısı oluşturulamadı', detail: result });
       }
