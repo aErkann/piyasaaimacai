@@ -172,8 +172,9 @@
         <div class="stat-card"><strong>₺${Number(dash.totalRevenue || 0).toLocaleString()}</strong><small>Toplam Gelir</small></div>
       `;
 
-      const vipList = await api('/admin/vip-list');
-      document.getElementById('vipBody').innerHTML = (vipList || []).map(v => `
+      const vipRes = await api('/admin/vip-list');
+      const vipList = Array.isArray(vipRes.data) ? vipRes.data : (Array.isArray(vipRes) ? vipRes : []);
+      document.getElementById('vipBody').innerHTML = vipList.length ? vipList.map(v => `
         <tr>
           <td>${v.deviceId || v.user?.deviceId || '-'}</td>
           <td>${v.email || '-'}</td>
