@@ -1966,7 +1966,23 @@
           state.vipEndDate = null;
         }
         updateVipUI();
+        updateBanner();
       } catch {}
+    }
+
+    async function updateBanner(){
+      const isNative = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+      if (!isNative) return;
+      try {
+        const { showBanner, hideBanner } = await import('./api/admob.js');
+        if (state.isVip) {
+          await hideBanner();
+        } else {
+          await showBanner('bottom');
+        }
+      } catch (e) {
+        console.warn('Banner error:', e);
+      }
     }
 
     function updateVipUI(){
@@ -2251,11 +2267,9 @@
       const isNative = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
       if (isNative) {
         try {
-          // Gerçek AdMob
-          const { RewardedAd } = await import('@capacitor-community/admob');
-          await RewardedAd.prepare({ adId: ADMOB_UNIT_ID });
-          const result = await RewardedAd.show();
-          if (result && result.adReward && result.adReward.amount > 0) {
+          const { showRewardedAd } = await import('./api/admob.js');
+          const result = await showRewardedAd();
+          if (result) {
             els.adTimer.textContent = "✓";
             els.claim.disabled = false;
             els.claim.textContent = "Ödülü al";
@@ -2265,7 +2279,6 @@
           console.warn('AdMob failed, fallback to timer:', e);
         }
       }
-      // Web/fallback: 5 saniye timer
       let s = 5;
       els.adTimer.textContent = s;
       clearInterval(state.timer);
@@ -2753,5 +2766,7 @@
       setTimeout(() => { switchPage("market"); ageGateCheck(); }, 100);
     }
   </script>
+  <!-- Banner reklam alani (sadece native Android'de gorunur) -->
+  <div id="bannerAd" style="display:none;position:fixed;bottom:0;left:0;width:100%;z-index:9999;background:rgba(3,7,11,.9);text-align:center"></div>
 </body>
 </html>

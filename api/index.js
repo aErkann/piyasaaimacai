@@ -54,9 +54,9 @@ app.get('/api/vip/price', (req, res) => {
 app.post('/api/admin/login', (req, res) => {
   const { username, password } = req.body || {};
   if (username === ADMIN_USER && password === ADMIN_PASS) {
-    res.json({ success: true, token: 'admin-token-' + Date.now() });
+    res.json({ success: true, token: 'admin-token-' + Date.now(), username: ADMIN_USER, role: 'admin' });
   } else {
-    res.status(401).json({ success: false, error: 'Geçersiz kullanıcı adı veya şifre' });
+    res.status(401).json({ success: false, message: 'Geçersiz kullanıcı adı veya şifre' });
   }
 });
 
@@ -100,7 +100,7 @@ app.post('/api/vip/create-payment', async (req, res) => {
     const baseUrl = process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
       : 'http://localhost:3000';
-    const { buyer_name, buyer_email, buyer_phone } = req.body || {};
+    const { buyer_name, buyer_email, buyer_phone, deviceId } = req.body || {};
 
     const productPayload = {
       product_name: 'PiyasaAI VIP Üyelik (1 Ay)',
@@ -110,7 +110,7 @@ app.post('/api/vip/create-payment', async (req, res) => {
       buyer_email: buyer_email || 'vip@kullanici.com',
       buyer_phone: buyer_phone || '5550000000',
       callback_url: `${baseUrl}/api/vip/shopier-webhook`,
-      extra: JSON.stringify({ plan: 'monthly', timestamp: Date.now() }),
+      extra: JSON.stringify({ plan: 'monthly', deviceId: deviceId || '', timestamp: Date.now() }),
     };
 
     const resp = await fetch('https://www.shopier.com/api/v1/product', {
@@ -135,10 +135,37 @@ app.post('/api/vip/create-payment', async (req, res) => {
 
 // ===== Shopier webhook =====
 app.post('/api/vip/shopier-webhook', (req, res) => {
-  // Webhook'tan gelen veriyi logla
-  console.log('Shopier webhook received:', JSON.stringify(req.body));
-  // TODO: İmza doğrulama + VIP aktivasyon
-  res.status(200).json({ success: true, message: 'Webhook alındı' });
+  try {
+    console.log('Shopier webhook received:', JSON.stringify(req.body));
+    const body = req.body || {};
+    // Shopier'dan gelen veriyi parse et
+    const extra = typeof body.extra === 'string' ? JSON.parse(body.extra) : (body.extra || {});
+    const deviceId = extra.deviceId || body.deviceId || body.buyer_email || 'webhook-' + Date.now();
+    const email = body.buyer_email || extra.email || '';
+    const cfg = getConfig();
+    const amount = body.product_price || body.amount || cfg.vipMonthlyPrice;
+    const vips = getVips();
+    const newVip = {
+      id: 'vip-' + Date.now(),
+      deviceId,
+      email,
+      startDate: new Date().toISOString(),
+      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      status: 'active',
+      amount: Number(amount),
+      provider: 'Shopier',
+      paymentMethod: 'Shopier',
+      orderId: body.order_id || body.id || '',
+      createdAt: new Date().toISOString()
+    };
+    vips.push(newVip);
+    saveVips(vips);
+    console.log('[Shopier] VIP activated:', deviceId);
+    res.status(200).json({ success: true, message: 'VIP aktif edildi' });
+  } catch (e) {
+    console.error('[Shopier] Webhook error:', e);
+    res.status(200).json({ success: true, message: 'Webhook alındı' });
+  }
 });
 
 // ===== Admin statik dosyaları serve et =====

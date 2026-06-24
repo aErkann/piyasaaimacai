@@ -9,6 +9,9 @@ const config: CapacitorConfig = {
       launchShowDuration: 2000,
       backgroundColor: '#03070b',
     },
+    AdMob: {
+      appId: process.env.ADMOB_ANDROID_APP_ID || 'ca-app-pub-xxx~yyy',
+    },
   },
 };
 
