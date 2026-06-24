@@ -107,6 +107,24 @@ app.post('/api/debug', (req, res) => {
   res.json({ method: 'POST', body: req.body });
 });
 
+app.get('/api/test-shopier', async (req, res) => {
+  try {
+    const pat = process.env.SHOPIER_PAT;
+    if (!pat) return res.json({ error: 'PAT yok' });
+    const flow = new ShopierPaymentFlow({ pat });
+    const result = await flow.createPaymentLink({
+      title: 'Test Ürün',
+      amount: 10,
+      currency: 'TRY',
+      stockQuantity: 1,
+      orderId: 'test-' + Date.now(),
+    });
+    res.json({ success: true, paymentUrl: result.paymentUrl });
+  } catch (e) {
+    res.json({ success: false, error: e.message, code: e.code, details: e.details, stack: (e.stack || '').substring(0, 1000) });
+  }
+});
+
 // ===== Shopier ödeme oluşturma =====
 app.post('/api/vip/create-payment', async (req, res) => {
   try {
@@ -133,7 +151,9 @@ app.post('/api/vip/create-payment', async (req, res) => {
     };
 
     try {
+      if (!pat) return res.status(500).json({ success: false, error: 'PAT yok' });
       const flow = new ShopierPaymentFlow({ pat });
+      console.log('[Shopier] Creating payment link for:', productPayload.product_price, productPayload.product_currency);
       const result = await flow.createPaymentLink({
         title: productPayload.product_name,
         amount: productPayload.product_price,
@@ -147,8 +167,13 @@ app.post('/api/vip/create-payment', async (req, res) => {
         res.status(400).json({ success: false, error: 'Shopier ödeme bağlantısı oluşturulamadı', detail: result });
       }
     } catch (e) {
-      console.error('[Shopier] SDK error:', e.message);
-      res.status(500).json({ success: false, error: 'Shopier hatası: ' + e.message });
+      console.error('[Shopier] SDK error:', e.message, e.stack?.substring(0, 500));
+      res.status(500).json({
+        success: false,
+        error: 'Shopier hatası: ' + e.message,
+        code: e.code || e.name,
+        details: e.details || {},
+      });
     }
   } catch (e) {
     console.error('[Shopier] Unhandled error:', e.message);
