@@ -1,7 +1,3 @@
 {
-  "buildCommand": "",
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index.js" },
-    { "source": "/(.*)", "destination": "/piyasaai_macai_tuzakradar_v8.html" }
-  ]
+  "buildCommand": ""
 }
