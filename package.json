@@ -18,6 +18,7 @@
     "@capacitor-community/admob": "^6.1.0",
     "@capacitor/core": "^6.1.0",
     "@capacitor/splash-screen": "^6.0.0",
+    "@nopeion/shopier": "^2.0.0",
     "express": "^4.21.0",
     "node-fetch": "^2.7.0"
   },

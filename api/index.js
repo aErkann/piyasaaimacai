@@ -2,27 +2,7 @@
 const express = require('express');
 const { readFileSync, writeFileSync, existsSync } = require('fs');
 const { join } = require('path');
-const https = require('https');
-
-function httpsRequest(host, path, method, headers, body) {
-  return new Promise((resolve, reject) => {
-    const opts = { hostname: host, path, method, headers, port: 443 };
-    const req = https.request(opts, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => {
-        if (res.statusCode >= 400) {
-          reject(new Error(`HTTP ${res.statusCode}: ${data.substring(0, 200)}`));
-        } else {
-          resolve(data);
-        }
-      });
-    });
-    req.on('error', reject);
-    if (body) req.write(body);
-    req.end();
-  });
-}
+const { ShopierPaymentFlow } = require('@nopeion/shopier');
 
 const app = express();
 app.use(express.json());
@@ -152,34 +132,29 @@ app.post('/api/vip/create-payment', async (req, res) => {
       extra: JSON.stringify({ plan: 'monthly', deviceId: deviceId || '', timestamp: Date.now() }),
     };
 
-    const shopierPayload = {
-      title: productPayload.product_name,
-      description: 'PiyasaAI VIP Üyelik (1 Ay) - Otomatik',
-      price: productPayload.product_price,
-      currency: productPayload.product_currency,
-      stock: 999,
-      images: [],
-    };
-
-    let body;
     try {
-      body = await httpsRequest('api.shopier.com', '/v1/products', 'POST', {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${pat}`,
-      }, JSON.stringify(shopierPayload));
-    } catch (fetchErr) {
-      console.error('[Shopier] Request error:', fetchErr.message);
-      return res.status(500).json({ success: false, error: 'Shopier bağlantı hatası: ' + fetchErr.message });
-    }
-
-    let data;
-    try { data = JSON.parse(body); } catch { data = { raw: body.substring(0, 500) }; }
-    if (data.paymentUrl || data.payment_url) {
-      res.json({ success: true, payment_url: data.paymentUrl || data.payment_url });
-    } else if (data.url) {
-      res.json({ success: true, payment_url: data.url });
-    } else {
-      res.status(400).json({ success: false, error: data.message || data.error || 'Shopier hatası', detail: data });
+      const flow = new ShopierPaymentFlow({ pat });
+      const result = await flow.createPaymentLink({
+        title: productPayload.product_name,
+        price: productPayload.product_price,
+        currency: productPayload.product_currency,
+        buyerName: productPayload.buyer_name,
+        buyerEmail: productPayload.buyer_email,
+        buyerPhone: productPayload.buyer_phone,
+        orderId: 'vip-' + Date.now(),
+        callbackUrl: productPayload.callback_url,
+        extra: productPayload.extra,
+      });
+      if (result.paymentUrl) {
+        res.json({ success: true, payment_url: result.paymentUrl });
+      } else if (result.checkoutHtml) {
+        res.json({ success: true, checkout_html: result.checkoutHtml, payment_url: result.paymentUrl });
+      } else {
+        res.status(400).json({ success: false, error: 'Shopier ödeme bağlantısı oluşturulamadı', detail: result });
+      }
+    } catch (e) {
+      console.error('[Shopier] SDK error:', e.message);
+      res.status(500).json({ success: false, error: 'Shopier hatası: ' + e.message });
     }
   } catch (e) {
     console.error('[Shopier] Unhandled error:', e.message);
