@@ -1,0 +1,1 @@
+{"version":3,"file":"admob.d.ts","sourceRoot":"","sources":["../../api/admob.ts"],"names":[],"mappings":"AAYA,MAAM,WAAW,WAAW;IAC1B,cAAc,EAAE,MAAM,CAAC;IACvB,KAAK,EAAE,MAAM,CAAC;CACf;AAOD,wBAAgB,cAAc,CAAC,MAAM,EAAE,OAAO,CAAC,WAAW,CAAC,QAG1D;AAED,wBAAsB,cAAc,IAAI,OAAO,CAAC,OAAO,CAAC,CAsBvD;AASD,wBAAgB,cAAc,IAAI,WAAW,CAE5C"}

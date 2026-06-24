@@ -1,0 +1,214 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Asset {
+  id        String   @id @default(uuid()) @db.Uuid
+  symbol    String?
+  name      String?
+  assetType String?  @map("asset_type")
+  market    String?
+  source    String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  signals MarketSignal[]
+
+  @@map("assets")
+}
+
+model MarketSignal {
+  id            String   @id @default(uuid()) @db.Uuid
+  assetId       String?  @map("asset_id") @db.Uuid
+  asset         Asset?   @relation(fields: [assetId], references: [id])
+  alphaScore    Int?     @map("alpha_score")
+  upProbability Int?     @map("up_probability")
+  downProbability Int?   @map("down_probability")
+  riskLevel     String?  @map("risk_level")
+  signalType    String?  @map("signal_type")
+  reasons       Json?    @db.JsonB
+  validUntil    DateTime? @map("valid_until") @db.Timestamptz()
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@map("market_signals")
+}
+
+model Match {
+  id            String   @id @default(uuid()) @db.Uuid
+  apiFixtureId  BigInt?  @unique @map("api_fixture_id")
+  league        String?
+  homeTeam      String?  @map("home_team")
+  awayTeam      String?  @map("away_team")
+  kickoff       DateTime? @db.Timestamptz()
+  status        String?
+  score         String?
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  predictions MatchPrediction[]
+
+  @@map("matches")
+}
+
+model MatchPrediction {
+  id              String   @id @default(uuid()) @db.Uuid
+  matchId         String?  @map("match_id") @db.Uuid
+  match           Match?   @relation(fields: [matchId], references: [id])
+  confidence      Int?
+  homeProbability Int?     @map("home_probability")
+  drawProbability Int?     @map("draw_probability")
+  awayProbability Int?     @map("away_probability")
+  mainPick        String?  @map("main_pick")
+  goalsPick       String?  @map("goals_pick")
+  bttsPick        String?  @map("btts_pick")
+  predictedScore  String?  @map("predicted_score")
+  riskLevel       String?  @map("risk_level")
+  reasons         Json?    @db.JsonB
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@map("match_predictions")
+}
+
+model TrapSignal {
+  id              String   @id @default(uuid()) @db.Uuid
+  targetType      String?  @map("target_type")
+  targetId        String?  @map("target_id") @db.Uuid
+  trapType        String?  @map("trap_type")
+  crowdScore      Int?     @map("crowd_score")
+  dataScore       Int?     @map("data_score")
+  trapScore       Int?     @map("trap_score")
+  riskLevel       String?  @map("risk_level")
+  crowdView       String?  @map("crowd_view")
+  dataView        String?  @map("data_view")
+  ifThen          Json?    @map("if_then") @db.JsonB
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@map("trap_signals")
+}
+
+model NewsItem {
+  id                String   @id @default(uuid()) @db.Uuid
+  title             String?
+  summary           String?
+  source            String?
+  impactType        String?  @map("impact_type")
+  impactScore       Int?     @map("impact_score")
+  relatedTargetType String?  @map("related_target_type")
+  relatedTargetId   String?  @map("related_target_id") @db.Uuid
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@map("news_items")
+}
+
+model WeeklyReport {
+  id           String   @id @default(uuid()) @db.Uuid
+  weekStart    DateTime? @map("week_start") @db.Date
+  weekEnd      DateTime? @map("week_end") @db.Date
+  totalMatches Int?     @map("total_matches")
+  hitCount     Int?     @map("hit_count")
+  missCount    Int?     @map("miss_count")
+  partialCount Int?     @map("partial_count")
+  successRate  Decimal? @map("success_rate") @db.Decimal(5, 2)
+  aiSummary    String?  @map("ai_summary")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@map("weekly_reports")
+}
+
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  deviceId  String?  @unique @map("device_id")
+  email     String?  @unique
+  phone     String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  unlocks         UserUnlock[]
+  adTransactions  AdTransaction[]
+  vipSubscriptions VipSubscription[]
+
+  @@map("users")
+}
+
+model VipSubscription {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String?   @map("user_id") @db.Uuid
+  user          User?     @relation(fields: [userId], references: [id])
+  deviceId      String?   @map("device_id")
+  email         String?
+  phone         String?
+  startDate     DateTime  @default(now()) @map("start_date") @db.Timestamptz()
+  endDate       DateTime? @map("end_date") @db.Timestamptz()
+  status        String    @default("active") // active, cancelled, expired
+  autoRenew     Boolean   @default(false) @map("auto_renew")
+  paymentMethod String?   @map("payment_method") // shopier, google_play, manual
+  paymentTxId   String?   @map("payment_tx_id")
+  pricePaid     Decimal?  @map("price_paid") @db.Decimal(10, 2)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  payments PaymentTransaction[]
+
+  @@map("vip_subscriptions")
+}
+
+model PaymentTransaction {
+  id              String   @id @default(uuid()) @db.Uuid
+  deviceId        String?  @map("device_id")
+  email           String?
+  phone           String?
+  amount          Decimal  @db.Decimal(10, 2)
+  currency        String   @default("TRY")
+  provider        String   // shopier, google_play
+  providerTxId    String?  @map("provider_tx_id") @unique
+  status          String   @default("pending") // pending, completed, failed, refunded
+  packageType     String   @default("vip_monthly") @map("package_type")
+  vipSubscriptionId String? @map("vip_subscription_id") @db.Uuid
+  vipSubscription VipSubscription? @relation(fields: [vipSubscriptionId], references: [id])
+  rawResponse     Json?    @map("raw_response") @db.JsonB
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("payment_transactions")
+}
+
+model AdminUser {
+  id        String   @id @default(uuid()) @db.Uuid
+  username  String   @unique
+  password  String
+  role      String   @default("admin")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@map("admin_users")
+}
+
+model UserUnlock {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String?  @map("user_id") @db.Uuid
+  user           User?    @relation(fields: [userId], references: [id])
+  panel          String?
+  expiresAt      DateTime? @map("expires_at") @db.Timestamptz()
+  credits        Int?     @default(0)
+  rewardProvider String?  @map("reward_provider")
+  rewardTxId     String?  @map("reward_tx_id")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@map("user_unlocks")
+}
+
+model AdTransaction {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String?  @map("user_id") @db.Uuid
+  user           User?    @relation(fields: [userId], references: [id])
+  panel          String?
+  rewardProvider String?  @map("reward_provider")
+  rewardTxId     String?  @map("reward_tx_id")
+  verified       Boolean? @default(false)
+  creditsAwarded Int?     @default(0)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@map("ad_transactions")
+}

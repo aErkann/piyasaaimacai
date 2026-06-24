@@ -1,0 +1,2757 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="PiyasaAI + MaçAI: Finansal veri analizi, maç istatistikleri ve AI destekli tuzak radarı." />
+  <meta name="keywords" content="piyasa, maç, ai, tuzak radar, istatistik, analiz" />
+  <meta name="google-play-app" content="com.piyasaai.app" />
+  <title>PiyasaAI + MaçAI</title>
+  <script>
+    // Capacitor WebView bridge
+    window.Capacitor = window.Capacitor || { isNativePlatform: () => false };
+    document.addEventListener('deviceready', () => { window.Capacitor.isNative = true; }, false);
+  </script>
+  <style>
+    :root{
+      --bg:#03070b;
+      --text:#f3fbff;
+      --muted:#8eabba;
+      --line:rgba(255,255,255,.11);
+      --green:#23d18b;
+      --red:#ff5d7a;
+      --yellow:#ffd166;
+      --blue:#40a9ff;
+      --purple:#a78bfa;
+      --orange:#fb923c;
+      --shadow:0 24px 70px rgba(0,0,0,.52);
+    }
+    *{box-sizing:border-box}
+    html,body{
+      margin:0;
+      min-height:100%;
+      background:var(--bg);
+      color:var(--text);
+      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    }
+    body{
+      background:
+        radial-gradient(circle at 12% 0%,rgba(64,169,255,.32),transparent 32%),
+        radial-gradient(circle at 92% 4%,rgba(35,209,139,.21),transparent 30%),
+        radial-gradient(circle at 44% 100%,rgba(167,139,250,.16),transparent 38%),
+        linear-gradient(180deg,#061016,#03070b 84%);
+    }
+    h1,h2,h3,p{margin:0}
+    button{
+      border:0;
+      appearance:none;
+      cursor:pointer;
+      font-family:inherit;
+      font-weight:850;
+      -webkit-tap-highlight-color:transparent;
+    }
+    button:active{transform:scale(.985)}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    .app{
+      width:min(430px,100%);
+      min-height:100vh;
+      margin:auto;
+      padding:18px 15px 116px;
+      border-left:1px solid rgba(255,255,255,.06);
+      border-right:1px solid rgba(255,255,255,.06);
+      background:linear-gradient(180deg,rgba(6,16,22,.78),rgba(3,7,11,.99));
+      overflow:hidden;
+    }
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:13px;
+    }
+    .brand{display:flex;align-items:center;gap:10px}
+    .logo{
+      width:44px;
+      height:44px;
+      border-radius:17px;
+      background:linear-gradient(135deg,var(--green),var(--blue));
+      display:grid;
+      place-items:center;
+      color:#031016;
+      font-weight:950;
+      font-size:22px;
+      box-shadow:0 16px 34px rgba(35,209,139,.23);
+    }
+    .brand h1{
+      font-size:19px;
+      letter-spacing:-.055em;
+      line-height:1.1;
+    }
+    .brand p{
+      color:var(--muted);
+      font-size:12px;
+      margin-top:2px;
+    }
+    .ghost{
+      background:rgba(255,255,255,.07);
+      color:var(--text);
+      border:1px solid var(--line);
+      border-radius:15px;
+      padding:10px 12px;
+    }
+    .primary{
+      background:linear-gradient(135deg,var(--green),#6ee7d8);
+      color:#031016;
+      border-radius:17px;
+      padding:13px 14px;
+      box-shadow:0 16px 35px rgba(35,209,139,.19);
+    }
+    .segment{
+      display:flex;
+      gap:8px;
+      overflow:auto;
+      scrollbar-width:none;
+      margin-bottom:12px;
+      padding-bottom:1px;
+    }
+    .segment::-webkit-scrollbar{display:none}
+    .segment button{
+      white-space:nowrap;
+      padding:11px 14px;
+      border-radius:999px;
+      background:rgba(255,255,255,.06);
+      color:var(--muted);
+      border:1px solid transparent;
+      font-size:13px;
+    }
+    .segment button.active{
+      color:#061016;
+      background:var(--text);
+    }
+    #tvTicker{
+      margin-bottom:12px;
+    }
+    .tradingview-widget-copyright{opacity:.4;font-size:10px;text-align:center}
+    .tradingview-widget-copyright a{color:#8eabba!important}
+    #tvChartWrap .tradingview-widget-container iframe{background:#03070b;border-radius:8px}
+    #tvOverviewWrap .tradingview-widget-container iframe{background:#03070b;border-radius:8px;min-height:300px}
+    .page{display:none}
+    .page.active{display:block}
+    .hero{
+      position:relative;
+      border:1px solid var(--line);
+      background:
+        linear-gradient(135deg,rgba(64,169,255,.19),rgba(35,209,139,.09)),
+        rgba(255,255,255,.056);
+      border-radius:30px;
+      padding:17px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .hero.match{
+      background:
+        linear-gradient(135deg,rgba(35,209,139,.17),rgba(251,146,60,.08)),
+        rgba(255,255,255,.056);
+    }
+    .hero.news{
+      background:
+        linear-gradient(135deg,rgba(167,139,250,.19),rgba(64,169,255,.08)),
+        rgba(255,255,255,.056);
+    }
+    .hero.results{
+      background:
+        linear-gradient(135deg,rgba(255,209,102,.15),rgba(35,209,139,.08)),
+        rgba(255,255,255,.056);
+    }
+    .hero::after{
+      content:"";
+      position:absolute;
+      width:230px;
+      height:230px;
+      border-radius:50%;
+      right:-105px;
+      bottom:-115px;
+      background:rgba(35,209,139,.16);
+      pointer-events:none;
+    }
+    .hero-grid{display:grid;grid-template-columns:1fr 94px;gap:14px}
+    .eyebrow{
+      display:inline-block;
+      color:var(--green);
+      font-size:12px;
+      font-weight:950;
+      margin-bottom:8px;
+    }
+    .hero h2{
+      font-size:29px;
+      line-height:1.03;
+      letter-spacing:-.078em;
+    }
+    .hero h2 b{color:var(--green)}
+    .hero p{
+      color:#bed3df;
+      font-size:14px;
+      line-height:1.45;
+      margin-top:10px;
+    }
+    .access{
+      position:relative;
+      z-index:2;
+      height:94px;
+      border-radius:24px;
+      background:rgba(0,0,0,.25);
+      border:1px solid rgba(255,255,255,.12);
+      display:grid;
+      place-items:center;
+      text-align:center;
+    }
+    .access strong{font-size:30px;line-height:1}
+    .access small{
+      display:block;
+      color:var(--muted);
+      font-size:11px;
+      margin-top:-18px;
+    }
+    .hero-actions{
+      display:grid;
+      grid-template-columns:1fr 104px;
+      gap:10px;
+      margin-top:14px;
+      position:relative;
+      z-index:2;
+    }
+    .hero-actions button{font-size:13px}
+    .pulse{
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:10px;
+      margin:12px 0 0;
+    }
+    .pulse.three{grid-template-columns:repeat(3,1fr)}
+    .pulse article{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.055);
+      border-radius:20px;
+      padding:12px;
+    }
+    .pulse span{
+      display:block;
+      color:var(--muted);
+      font-size:11px;
+    }
+    .pulse strong{
+      display:block;
+      margin-top:5px;
+      font-size:18px;
+      letter-spacing:-.045em;
+    }
+    .pulse small{
+      display:block;
+      margin-top:3px;
+      color:#bdd1dc;
+      font-size:11px;
+      line-height:1.32;
+    }
+    .warning{
+      margin:12px 0 0;
+      border:1px solid rgba(255,209,102,.18);
+      background:rgba(255,209,102,.08);
+      color:#f7dfad;
+      padding:11px 12px;
+      border-radius:18px;
+      font-size:12px;
+      line-height:1.45;
+    }
+    .tabs{
+      display:flex;
+      gap:8px;
+      margin:16px -15px 12px 0;
+      overflow:auto;
+      scrollbar-width:none;
+      padding-bottom:1px;
+    }
+    .tabs::-webkit-scrollbar{display:none}
+    .tabs button{
+      white-space:nowrap;
+      padding:10px 13px;
+      border-radius:999px;
+      background:rgba(255,255,255,.06);
+      border:1px solid transparent;
+      color:var(--muted);
+      font-size:13px;
+    }
+    .tabs button.active{
+      background:var(--text);
+      color:#061016;
+    }
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:9px;
+      margin-bottom:16px;
+    }
+    .stats article{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.055);
+      border-radius:19px;
+      padding:12px 7px;
+      text-align:center;
+    }
+    .stats span{
+      display:block;
+      color:var(--muted);
+      font-size:11px;
+      line-height:1.2;
+    }
+    .stats strong{
+      display:block;
+      margin-top:5px;
+      font-size:20px;
+      letter-spacing:-.04em;
+    }
+    .section-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      margin:4px 2px 10px;
+      gap:12px;
+    }
+    .section-head h3{
+      font-size:19px;
+      letter-spacing:-.04em;
+    }
+    .section-head p{
+      color:var(--muted);
+      font-size:12px;
+      margin-top:2px;
+    }
+    .section-head span{
+      font-size:11px;
+      color:var(--muted);
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      padding:7px 9px;
+      border-radius:999px;
+      white-space:nowrap;
+    }
+    .cards{display:grid;gap:10px}
+    .card{
+      border:1px solid var(--line);
+      border-radius:25px;
+      padding:14px;
+      background:linear-gradient(180deg,rgba(255,255,255,.078),rgba(255,255,255,.04));
+      overflow:hidden;
+      position:relative;
+    }
+    .card.locked .secret{
+      filter:blur(7px);
+      opacity:.5;
+      pointer-events:none;
+      user-select:none;
+    }
+    .cardtop{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+    }
+    .asset{
+      display:flex;
+      gap:11px;
+      align-items:center;
+    }
+    .icon{
+      width:44px;
+      height:44px;
+      border-radius:16px;
+      background:rgba(255,255,255,.09);
+      display:grid;
+      place-items:center;
+      font-weight:950;
+      font-size:11px;
+    }
+    .name strong{display:block;font-size:15px}
+    .name span{
+      display:block;
+      color:var(--muted);
+      font-size:12px;
+      margin-top:2px;
+    }
+    .alpha{
+      font-size:12px;
+      font-weight:950;
+      padding:7px 9px;
+      border-radius:999px;
+      background:rgba(255,255,255,.08);
+      white-space:nowrap;
+    }
+    .alpha.hot{color:var(--green)}
+    .alpha.warn{color:var(--yellow)}
+    .alpha.bad{color:var(--red)}
+    .headline{margin-top:13px}
+    .headline h3{
+      font-size:23px;
+      font-weight:950;
+      letter-spacing:-.058em;
+      line-height:1.05;
+    }
+    .headline p{
+      font-size:13px;
+      font-weight:850;
+      margin-top:5px;
+      color:#bed3df;
+    }
+    .prob{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:8px;
+      margin-top:12px;
+    }
+    .prob.two{grid-template-columns:1fr 1fr}
+    .probbox{
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(0,0,0,.16);
+      border-radius:16px;
+      padding:10px;
+    }
+    .probbox span{
+      display:block;
+      color:var(--muted);
+      font-size:11px;
+      margin-bottom:5px;
+    }
+    .probbox strong{
+      display:block;
+      font-size:18px;
+      letter-spacing:-.04em;
+    }
+    .up{color:var(--green)}
+    .down{color:var(--red)}
+    .yellow{color:var(--yellow)}
+    .blue{color:var(--blue)}
+    .bar{
+      height:9px;
+      background:rgba(255,255,255,.08);
+      border-radius:999px;
+      overflow:hidden;
+      margin-top:10px;
+    }
+    .bar i{
+      display:block;
+      height:100%;
+      width:var(--w);
+      background:linear-gradient(90deg,var(--green),var(--blue));
+      border-radius:999px;
+    }
+    .bar.red i{background:linear-gradient(90deg,var(--red),var(--orange))}
+    .meta{
+      display:flex;
+      gap:7px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+    .meta span{
+      font-size:11px;
+      color:#b9cfdd;
+      background:rgba(255,255,255,.065);
+      border:1px solid rgba(255,255,255,.08);
+      padding:7px 8px;
+      border-radius:999px;
+    }
+    .reason{
+      margin-top:12px;
+      color:#c2d6e1;
+      font-size:12px;
+      line-height:1.45;
+    }
+    .detail-list{
+      margin-top:10px;
+      display:grid;
+      gap:6px;
+    }
+    .detail-list div{
+      font-size:12px;
+      color:#d5e4ec;
+      background:rgba(0,0,0,.16);
+      border:1px solid rgba(255,255,255,.07);
+      padding:8px 9px;
+      border-radius:14px;
+    }
+    .card-actions{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+      margin-top:12px;
+    }
+    .card-actions button{
+      font-size:12px;
+      padding:10px;
+      border-radius:14px;
+    }
+    .mini-primary{
+      background:rgba(35,209,139,.16);
+      color:var(--green);
+      border:1px solid rgba(35,209,139,.22);
+    }
+    .mini-ghost{
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      border:1px solid rgba(255,255,255,.10);
+    }
+    .lock{
+      position:absolute;
+      inset:0;
+      background:linear-gradient(180deg,rgba(6,16,22,.10),rgba(6,16,22,.90));
+      display:flex;
+      align-items:flex-end;
+      padding:14px;
+    }
+    .lock button{
+      width:100%;
+      background:#f2fbff;
+      color:#061016;
+      border-radius:16px;
+      padding:12px 13px;
+    }
+    .engine{
+      margin-top:12px;
+      border:1px solid rgba(64,169,255,.20);
+      border-radius:25px;
+      padding:14px;
+      background:linear-gradient(135deg,rgba(64,169,255,.10),rgba(167,139,250,.08)),rgba(255,255,255,.04);
+    }
+    .engine h3{
+      font-size:17px;
+      letter-spacing:-.04em;
+      margin-bottom:10px;
+    }
+    .engine-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+    }
+    .engine-box{
+      border:1px solid rgba(255,255,255,.09);
+      background:rgba(255,255,255,.055);
+      border-radius:17px;
+      padding:10px;
+    }
+    .engine-box strong{
+      display:block;
+      font-size:13px;
+    }
+    .engine-box span{
+      display:block;
+      color:var(--muted);
+      font-size:11px;
+      margin-top:3px;
+      line-height:1.35;
+    }
+    .news-list{display:grid;gap:10px}
+    .news-card{
+      border:1px solid var(--line);
+      border-radius:22px;
+      padding:13px;
+      background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.035));
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+    }
+    .news-icon{
+      width:42px;
+      height:42px;
+      border-radius:16px;
+      background:rgba(255,255,255,.08);
+      display:grid;
+      place-items:center;
+      flex:0 0 auto;
+    }
+    .news-card h3{
+      font-size:15px;
+      line-height:1.25;
+      margin-bottom:5px;
+      letter-spacing:-.025em;
+    }
+    .news-card p{
+      color:#bdd1dc;
+      font-size:12px;
+      line-height:1.45;
+    }
+    .news-card .meta{margin-top:8px}
+    .result-row{
+      display:grid;
+      gap:10px;
+    }
+    .trap-matrix{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+      margin-top:12px;
+    }
+    .trap-box{
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(0,0,0,.16);
+      border-radius:16px;
+      padding:10px;
+    }
+    .trap-box span{
+      display:block;
+      color:var(--muted);
+      font-size:11px;
+      margin-bottom:5px;
+    }
+    .trap-box strong{
+      display:block;
+      font-size:18px;
+      letter-spacing:-.04em;
+    }
+    .condition{
+      display:grid;
+      gap:7px;
+      margin-top:12px;
+    }
+    .condition div{
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.055);
+      border-radius:15px;
+      padding:9px;
+      font-size:12px;
+      line-height:1.4;
+      color:#d5e4ec;
+    }
+    .condition b{
+      color:var(--green);
+    }
+    .crowd-data{
+      display:grid;
+      gap:8px;
+      margin-top:12px;
+    }
+    .crowd-data article{
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.055);
+      border-radius:17px;
+      padding:10px;
+    }
+    .crowd-data span{
+      display:block;
+      font-size:11px;
+      color:var(--muted);
+      margin-bottom:5px;
+    }
+    .crowd-data p{
+      font-size:12px;
+      line-height:1.45;
+      color:#d4e3eb;
+      margin:0;
+    }
+    .week-chart{
+      display:grid;
+      gap:9px;
+      margin-top:10px;
+    }
+    .week-bar{
+      border:1px solid rgba(255,255,255,.09);
+      background:rgba(255,255,255,.055);
+      border-radius:17px;
+      padding:10px;
+    }
+    .week-bar-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:8px;
+      font-size:12px;
+      color:#d8e8ef;
+      font-weight:850;
+    }
+    .week-line{
+      height:9px;
+      background:rgba(255,255,255,.08);
+      border-radius:999px;
+      overflow:hidden;
+    }
+    .week-line i{
+      display:block;
+      height:100%;
+      width:var(--w);
+      background:linear-gradient(90deg,var(--green),var(--blue));
+      border-radius:999px;
+    }
+    .calendar-grid{
+      display:grid;
+      grid-template-columns:repeat(7,1fr);
+      gap:6px;
+      margin-top:10px;
+    }
+    .day-pill{
+      border:1px solid rgba(255,255,255,.09);
+      background:rgba(255,255,255,.055);
+      border-radius:14px;
+      padding:8px 4px;
+      text-align:center;
+    }
+    .day-pill strong{
+      display:block;
+      font-size:12px;
+    }
+    .day-pill span{
+      display:block;
+      color:var(--muted);
+      font-size:10px;
+      margin-top:3px;
+    }
+    .scoreline{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-top:12px;
+      padding:12px;
+      border-radius:18px;
+      background:rgba(0,0,0,.16);
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .scoreline strong{
+      font-size:18px;
+      letter-spacing:-.03em;
+    }
+    .legal-card{
+      margin-top:12px;
+      border:1px solid rgba(255,209,102,.20);
+      border-radius:25px;
+      padding:14px;
+      background:rgba(255,209,102,.07);
+      color:#ffe8b8;
+    }
+    .legal-card h3{
+      font-size:17px;
+      letter-spacing:-.04em;
+      margin-bottom:8px;
+    }
+    .legal-card p{
+      font-size:12px;
+      line-height:1.5;
+      color:#f8dfad;
+    }
+    .bottom-nav{
+      position:fixed;
+      left:50%;
+      bottom:12px;
+      transform:translateX(-50%);
+      width:min(398px,calc(100% - 24px));
+      padding:9px;
+      border-radius:26px;
+      border:1px solid var(--line);
+      background:rgba(8,19,27,.86);
+      backdrop-filter:blur(20px);
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      box-shadow:0 18px 60px rgba(0,0,0,.44);
+      z-index:20;
+    }
+    .bottom-nav button{
+      color:var(--muted);
+      background:transparent;
+      border-radius:18px;
+      padding:7px 3px;
+      font-size:18px;
+    }
+    .bottom-nav button span{
+      display:block;
+      font-size:11px;
+      margin-top:2px;
+    }
+    .bottom-nav button.active{
+      color:var(--text);
+      background:rgba(255,255,255,.08);
+    }
+    .modal{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.74);
+      display:none;
+      place-items:center;
+      padding:18px;
+      z-index:99;
+    }
+    .modal.show{display:grid}
+    .modal-card{
+      width:min(392px,100%);
+      max-height:88vh;
+      overflow:auto;
+      border-radius:30px;
+      border:1px solid var(--line);
+      background:linear-gradient(180deg,#102533,#071016);
+      box-shadow:var(--shadow);
+      padding:18px;
+    }
+    .ad-visual{
+      height:205px;
+      border:1px dashed rgba(255,255,255,.2);
+      border-radius:25px;
+      background:linear-gradient(135deg,rgba(255,209,102,.20),rgba(35,209,139,.12));
+      display:grid;
+      place-items:center;
+      margin-bottom:14px;
+    }
+    .ad-visual span{
+      width:78px;
+      height:78px;
+      border-radius:27px;
+      background:linear-gradient(135deg,var(--yellow),var(--green));
+      display:grid;
+      place-items:center;
+      color:#071016;
+      font-size:32px;
+      font-weight:950;
+    }
+    .modal-card h3{
+      font-size:22px;
+      letter-spacing:-.05em;
+      margin-bottom:7px;
+    }
+    .modal-card p{
+      color:#bfd2dc;
+      font-size:14px;
+      line-height:1.45;
+      margin-bottom:14px;
+    }
+    .modal-actions{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    .legal-modal h4{
+      margin:14px 0 6px;
+      font-size:15px;
+    }
+    .legal-modal ul{
+      margin:8px 0 0 18px;
+      padding:0;
+      color:#cfe0e8;
+      font-size:13px;
+      line-height:1.5;
+    }
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:95px;
+      transform:translateX(-50%) translateY(18px);
+      background:#effbff;
+      color:#061016;
+      border-radius:999px;
+      padding:12px 14px;
+      font-size:13px;
+      font-weight:950;
+      opacity:0;
+      transition:.25s;
+      z-index:130;
+      box-shadow:0 18px 55px rgba(0,0,0,.34);
+      white-space:nowrap;
+      pointer-events:none;
+    }
+    .toast.show{
+      opacity:1;
+      transform:translateX(-50%) translateY(0);
+    }
+    @media(max-width:360px){
+      .hero-grid{grid-template-columns:1fr}
+      .hero-actions{grid-template-columns:1fr}
+      .access{height:74px}
+      .access small{margin-top:-12px}
+      .prob{grid-template-columns:1fr}
+      .pulse.three{grid-template-columns:1fr 1fr}
+      .engine-grid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div id="loadingScreen" style="position:fixed;inset:0;background:#03070b;display:grid;place-items:center;z-index:999;color:#23d18b;font-size:18px;font-weight:800">
+    <div style="text-align:center">
+      <div style="width:60px;height:60px;border:4px solid rgba(35,209,139,.2);border-top-color:#23d18b;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px"></div>
+      PiyasaAI + MaçAI<br><span style="color:#8eabba;font-size:13px">Yükleniyor...</span>
+    </div>
+  </div>
+  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo" id="brandLogo">α</div>
+        <div>
+          <h1 id="brandTitle">PiyasaAI Alpha</h1>
+          <p id="brandSub">Alpha radar + MaçAI ekosistemi</p>
+        </div>
+      </div>
+      <button class="ghost" id="scanBtn">📡 Tara</button>
+    </header>
+
+    <nav class="segment" id="mainSegment">
+      <button class="active" data-page="market">PiyasaAI</button>
+      <button data-page="match">MaçAI</button>
+      <button data-page="trap">Tuzak Radar</button>
+      <button data-page="news">Haberler</button>
+      <button data-page="results">Sonuçlar</button>
+      <button data-page="weekly">Haftalık</button>
+      <button data-page="profile">Profil</button>
+    </nav>
+
+    <div id="tvTicker" style="overflow:hidden;height:44px;background:transparent;border-bottom:1px solid rgba(255,255,255,.06)">
+      <!-- TradingView Widget BEGIN -->
+      <div class="tradingview-widget-container" style="height:44px">
+        <div class="tradingview-widget-container__widget" style="height:44px"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
+        {
+          "symbols": [
+            {"proName": "BITSTAMP:BTCUSD", "title": "Bitcoin"},
+            {"proName": "BITSTAMP:ETHUSD", "title": "Ethereum"},
+            {"proName": "COINBASE:SOLUSD", "title": "Solana"},
+            {"proName": "NASDAQ:AAPL", "title": "Apple"},
+            {"proName": "NASDAQ:TSLA", "title": "Tesla"},
+            {"proName": "NASDAQ:MSFT", "title": "Microsoft"},
+            {"proName": "NASDAQ:GOOGL", "title": "Google"},
+            {"proName": "NASDAQ:NVDA", "title": "NVIDIA"},
+            {"proName": "NASDAQ:AMZN", "title": "Amazon"},
+            {"proName": "BIST:THYAO", "title": "THY"},
+            {"proName": "BIST:GARAN", "title": "Garanti"},
+            {"proName": "BIST:EREGL", "title": "Ereğli"}
+          ],
+          "showSymbolLogo": true,
+          "colorTheme": "dark",
+          "isTransparent": true,
+          "displayMode": "adaptive",
+          "locale": "tr"
+        }
+        </script>
+      </div>
+      <!-- TradingView Widget END -->
+    </div>
+
+    <!-- PIYASAAI FULL -->
+    <section class="page active" id="marketPage">
+      <section class="hero">
+        <div class="hero-grid">
+          <div>
+            <span class="eyebrow">Herkesin verdiği fiyat değil</span>
+            <h2>Boğa/düşüş<br><b>alpha radarı.</b></h2>
+            <p>Yeni kripto, yeni hisse/halka arz, yerli borsa ve global piyasa adaylarını skorlayıp sadece dikkat çekenleri gösterir.</p>
+          </div>
+          <div class="access">
+            <strong id="marketMinutes">0</strong>
+            <small>dk açık</small>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <button class="primary" onclick="openAd('market')">🎬 5 dk detay aç</button>
+          <button class="ghost" onclick="openLegal()">Yasal</button>
+        </div>
+      </section>
+
+      <section class="pulse">
+        <article>
+          <span>Boğa adayı</span>
+          <strong id="bullCount">--</strong>
+          <small>70+ alpha ve orta/düşük risk</small>
+        </article>
+        <article>
+          <span>Düşüş riski</span>
+          <strong id="bearCount">--</strong>
+          <small>Satış baskısı / risk filtresi</small>
+        </article>
+      </section>
+
+      <section class="warning">
+        <b>Yatırım tavsiyesi değildir.</b> Alpha skoru, yükseliş/düşüş ihtimali ve AI açıklamaları genel veri göstergesidir.
+      </section>
+
+      <nav class="tabs" id="marketTabs">
+        <button class="active" data-filter="all">Alpha Radar</button>
+        <button data-filter="bull">Boğa Adayı</button>
+        <button data-filter="bear">Düşüş Riski</button>
+        <button data-filter="newcrypto">Yeni Kripto</button>
+        <button data-filter="ipo">Yeni Hisse</button>
+        <button data-filter="local">Yerli Fırsat</button>
+        <button data-filter="watch">Takip</button>
+      </nav>
+
+      <section class="stats">
+        <article>
+          <span>Ortalama alpha</span>
+          <strong id="avgAlpha">--</strong>
+        </article>
+        <article>
+          <span>AI kredi</span>
+          <strong id="marketCredits">0</strong>
+        </article>
+        <article>
+          <span>Radar adayı</span>
+          <strong id="candidateCount">--</strong>
+        </article>
+      </section>
+
+      <section class="section-head">
+        <div>
+          <h3 id="marketListTitle">Alpha Radar</h3>
+          <p id="marketListDesc">Sadece dikkat çeken adayları gösterir.</p>
+        </div>
+        <span id="marketStatus">Demo tarama</span>
+      </section>
+
+      <section class="cards" id="marketCards"></section>
+
+      <!-- TradingView Chart -->
+      <section class="engine" id="tvChartSection" style="display:none">
+        <div class="section-head" style="cursor:pointer;margin-bottom:10px" onclick="document.getElementById('tvChartWrap').style.display=document.getElementById('tvChartWrap').style.display==='none'?'block':'none'">
+          <h3>📈 Canlı Piyasa Grafiği</h3>
+          <span id="tvChartToggle">▲</span>
+        </div>
+        <div id="tvChartWrap">
+          <div class="tradingview-widget-container" style="height:400px;width:100%">
+            <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
+            <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/NASDAQ-AAPL/" rel="noopener nofollow" target="_blank"><span class="blue-text">Piyasa grafiği</span></a><span class="trademark"> by TradingView</span></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+            {
+              "autosize": true,
+              "symbol": "BITSTAMP:BTCUSD",
+              "interval": "60",
+              "timezone": "Europe/Istanbul",
+              "theme": "dark",
+              "style": "1",
+              "withdateranges": true,
+              "hide_side_toolbar": false,
+              "allow_symbol_change": true,
+              "save_image": false,
+              "locale": "tr",
+              "hide_top_toolbar": false,
+              "backgroundColor": "rgba(3,7,11,1)",
+              "calendar": false,
+              "support_host": "https://www.tradingview.com"
+            }
+            </script>
+          </div>
+        </div>
+      </section>
+
+      <!-- TradingView Market Overview -->
+      <section class="engine" id="tvOverviewSection" style="display:none">
+        <div class="section-head" style="cursor:pointer;margin-bottom:10px" onclick="document.getElementById('tvOverviewWrap').style.display=document.getElementById('tvOverviewWrap').style.display==='none'?'block':'none'">
+          <h3>📊 Piyasa Özeti</h3>
+          <span id="tvOverviewToggle">▲</span>
+        </div>
+        <div id="tvOverviewWrap">
+          <div class="tradingview-widget-container" style="min-height:300px">
+            <div class="tradingview-widget-container__widget"></div>
+            <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/markets/" rel="noopener nofollow" target="_blank"><span class="blue-text">Piyasalar</span></a><span class="trademark"> by TradingView</span></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
+            {
+              "colorTheme": "dark",
+              "isTransparent": true,
+              "width": "100%",
+              "height": "100%",
+              "locale": "tr",
+              "tabs": [
+                {
+                  "title": "Kripto",
+                  "symbols": [
+                    {"s": "BITSTAMP:BTCUSD"},
+                    {"s": "BITSTAMP:ETHUSD"},
+                    {"s": "COINBASE:SOLUSD"},
+                    {"s": "COINBASE:XRPUSD"},
+                    {"s": "COINBASE:ADAUSD"},
+                    {"s": "BINANCE:MATICUSD"}
+                  ]
+                },
+                {
+                  "title": "Hisseler",
+                  "symbols": [
+                    {"s": "NASDAQ:AAPL"},
+                    {"s": "NASDAQ:TSLA"},
+                    {"s": "NASDAQ:NVDA"},
+                    {"s": "NASDAQ:MSFT"},
+                    {"s": "NASDAQ:AMZN"},
+                    {"s": "NASDAQ:GOOGL"}
+                  ]
+                },
+                {
+                  "title": "BIST",
+                  "symbols": [
+                    {"s": "BIST:THYAO"},
+                    {"s": "BIST:GARAN"},
+                    {"s": "BIST:EREGL"},
+                    {"s": "BIST:TUPRS"},
+                    {"s": "BIST:SAHOL"},
+                    {"s": "BIST:KCHOL"}
+                  ]
+                }
+              ]
+            }
+            </script>
+          </div>
+        </div>
+      </section>
+
+      <!-- Show TV widgets on market page -->
+      <script>
+      (function(){
+        const page = document.getElementById('marketPage');
+        if (page) {
+          const obs = new MutationObserver(() => {
+            if (page.classList.contains('active')) {
+              document.getElementById('tvChartSection').style.display = '';
+              document.getElementById('tvOverviewSection').style.display = '';
+              obs.disconnect();
+            }
+          });
+          obs.observe(page, { attributes: true, attributeFilter: ['class'] });
+          if (page.classList.contains('active')) {
+            document.getElementById('tvChartSection').style.display = '';
+            document.getElementById('tvOverviewSection').style.display = '';
+          }
+        }
+      })();
+      </script>
+
+      <section class="engine">
+        <h3>PiyasaAI Alpha Engine</h3>
+        <div class="engine-grid">
+          <div class="engine-box"><strong>Boğa hazırlığı</strong><span>Trend kırılımı, hacim, momentum ve direnç yakınlığı.</span></div>
+          <div class="engine-box"><strong>Düşüş riski</strong><span>Likidite zayıflığı, aşırı pump, satış baskısı ve holder riski.</span></div>
+          <div class="engine-box"><strong>Yeni arz radarı</strong><span>Halka arz / yeni token takvimi ve ilk işlem sonrası takip.</span></div>
+          <div class="engine-box"><strong>Yerli fırsat</strong><span>TRY paritesi hacmi, spread, yerli borsa farkı ve talep.</span></div>
+        </div>
+      </section>
+    </section>
+
+    <!-- MACAI -->
+    <section class="page" id="matchPage">
+      <section class="hero match">
+        <div class="hero-grid">
+          <div>
+            <span class="eyebrow">İstatistiksel maç analizi</span>
+            <h2>Günün 6 maçını<br><b>AI analiz eder.</b></h2>
+            <p>API-Football verisi, form, sakatlık, kadro, xG, canlı skor ve istatistiklerle maç değerlendirmesi üretir.</p>
+          </div>
+          <div class="access">
+            <strong id="matchMinutes">0</strong>
+            <small>dk açık</small>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <button class="primary" onclick="openAd('match')">🎬 5 dk analiz aç</button>
+          <button class="ghost" onclick="openLegal()">Yasal</button>
+        </div>
+      </section>
+
+      <section class="pulse three">
+        <article><span>Bugünkü maç</span><strong>6</strong><small>Günlük limit</small></article>
+        <article><span>Yüksek güven</span><strong id="strongMatchCount">--</strong><small>70+ güven</small></article>
+        <article><span>Canlı</span><strong id="liveMatchCount">--</strong><small>Skor akışı</small></article>
+      </section>
+
+      <section class="warning">
+        <b>Önemli:</b> MaçAI istatistiksel veri analizi sunar, gerçek para ile ilgili işlem yapmaz. Tüm analizler bilgilendirme amaçlıdır.
+      </section>
+
+      <nav class="tabs" id="matchTabs">
+        <button class="active" data-filter="six">Günün 6 Maçı</button>
+        <button data-filter="live">Canlı</button>
+        <button data-filter="ai">AI Güçlü</button>
+        <button data-filter="goals">Gol Pazarı</button>
+        <button data-filter="risk">Riskli Maç</button>
+      </nav>
+
+      <section class="stats">
+        <article><span>Ort. güven</span><strong id="avgConfidence">--</strong></article>
+        <article><span>AI kredi</span><strong id="matchCredits">0</strong></article>
+        <article><span>Seçili maç</span><strong id="visibleMatches">--</strong></article>
+      </section>
+
+      <section class="section-head">
+        <div>
+          <h3 id="matchListTitle">Günün 6 Maçı</h3>
+          <p id="matchListDesc">Sadece istatistiksel değeri olan maçlar seçilir.</p>
+        </div>
+        <span id="matchStatus">Demo veri</span>
+      </section>
+
+      <section class="cards" id="matchCards"></section>
+
+      <section class="engine">
+        <h3>MaçAI farkı</h3>
+        <div class="engine-grid">
+          <div class="engine-box"><strong>Günde 6 maç</strong><span>Her maçı değil, analiz değeri olanı seçer.</span></div>
+          <div class="engine-box"><strong>Kapsamlı analiz</strong><span>MS, KG, üst/alt, skor ve risk ayrı verilir.</span></div>
+          <div class="engine-box"><strong>Canlı momentum</strong><span>Canlı skor, kart, şut, xG ve dakika takibi.</span></div>
+          <div class="engine-box"><strong>AI gerekçe</strong><span>OpenAI/Gemini veriyi sade açıklar.</span></div>
+        </div>
+      </section>
+    </section>
+
+
+    <!-- TUZAK RADAR -->
+    <section class="page" id="trapPage">
+      <section class="hero news">
+        <div class="hero-grid">
+          <div>
+            <span class="eyebrow">Kalabalık yanılıyor mu?</span>
+            <h2>Tuzakları<br><b>önceden yakala.</b></h2>
+            <p>Piyasa ve maçlarda kalabalığın gördüğü şey ile verinin söylediği şey çelişiyorsa, Tuzak Radar bunu işaretler.</p>
+          </div>
+          <div class="access">
+            <strong id="trapMinutes">0</strong>
+            <small>dk açık</small>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <button class="primary" onclick="openAd('trap')">🎬 5 dk tuzak aç</button>
+          <button class="ghost" onclick="openLegal()">Yasal</button>
+        </div>
+      </section>
+
+      <section class="pulse three">
+        <article><span>Aktif tuzak</span><strong id="trapCount">--</strong><small>Piyasa + maç</small></article>
+        <article><span>Yüksek risk</span><strong id="trapHigh">--</strong><small>%65+ tuzak</small></article>
+        <article><span>Sessiz fırsat</span><strong id="quietBull">--</strong><small>Kalabalık fark etmedi</small></article>
+      </section>
+
+      <section class="warning">
+        <b>Tuzak Radar mantığı:</b> Bu bölüm “kesin al/sat” veya “kesin maç sonucu” vermez; kalabalık algısı ile veri sinyali arasındaki çelişkiyi gösterir.
+      </section>
+
+      <nav class="tabs" id="trapTabs">
+        <button class="active" data-filter="all">Tüm Tuzaklar</button>
+        <button data-filter="market">Piyasa Tuzakları</button>
+        <button data-filter="match">Maç Tuzakları</button>
+        <button data-filter="quiet">Sessiz Boğa</button>
+        <button data-filter="pump">Riskli Pump</button>
+        <button data-filter="odds">Değer Tuzağı</button>
+        <button data-filter="lineup">11 Tuzağı</button>
+        <button data-filter="live">Canlı Tuzak</button>
+      </nav>
+
+      <section class="stats">
+        <article><span>Ort. tuzak</span><strong id="avgTrap">--</strong></article>
+        <article><span>AI kredi</span><strong id="trapCredits">0</strong></article>
+        <article><span>Radar adayı</span><strong id="trapVisible">--</strong></article>
+      </section>
+
+      <section class="section-head">
+        <div>
+          <h3 id="trapTitle">Tüm Tuzaklar</h3>
+          <p id="trapDesc">Kalabalık algısı ile veri sinyali ayrışan adaylar.</p>
+        </div>
+        <span>Demo tuzak</span>
+      </section>
+
+      <section class="cards" id="trapCards"></section>
+
+      <section class="engine">
+        <h3>Tuzak Radar nasıl çalışır?</h3>
+        <div class="engine-grid">
+          <div class="engine-box"><strong>Kalabalık algısı</strong><span>Popüler söylem, fiyat/sonuç beklentisi ve yüzeysel veri.</span></div>
+          <div class="engine-box"><strong>Veri karşılığı</strong><span>Hacim, likidite, xG, kadro, momentum, canlı olaylar.</span></div>
+          <div class="engine-box"><strong>Çelişki puanı</strong><span>Kalabalık ile veri ayrışınca tuzak skoru yükselir.</span></div>
+          <div class="engine-box"><strong>Eğer / O zaman</strong><span>Sinyalin güçleneceği ve iptal olacağı şartları verir.</span></div>
+        </div>
+      </section>
+    </section>
+
+
+    <!-- HABERLER -->
+    <section class="page" id="newsPage">
+      <section class="hero news">
+        <div class="hero-grid">
+          <div>
+            <span class="eyebrow">Ayrı haber penceresi</span>
+            <h2>Haberleri maça<br><b>etki olarak oku.</b></h2>
+            <p>Sıradan haber listesi değil; kadro, sakatlık, transfer, piyasa ve maç tahminine etkisi olan haberler ayrılır.</p>
+          </div>
+          <div class="access">
+            <strong id="newsMinutes">0</strong>
+            <small>dk açık</small>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <button class="primary" onclick="openAd('news')">🎬 5 dk haber detayı</button>
+          <button class="ghost" onclick="openLegal()">Yasal</button>
+        </div>
+      </section>
+
+      <nav class="tabs" id="newsTabs">
+        <button class="active" data-filter="all">Tüm Haberler</button>
+        <button data-filter="football">Maç Haberleri</button>
+        <button data-filter="market">Piyasa Haberleri</button>
+        <button data-filter="injury">Sakatlık/Kadro</button>
+        <button data-filter="impact">AI Etki</button>
+      </nav>
+
+      <section class="section-head">
+        <div>
+          <h3 id="newsTitle">Tüm Haberler</h3>
+          <p id="newsDesc">Haberler analiz etkisine göre öne çıkarılır.</p>
+        </div>
+        <span>Demo akış</span>
+      </section>
+
+      <section class="news-list" id="newsList"></section>
+    </section>
+
+    <!-- SONUCLAR -->
+    <section class="page" id="resultsPage">
+      <section class="hero results">
+        <div class="hero-grid">
+          <div>
+            <span class="eyebrow">Sonuçlar ayrı pencere</span>
+            <h2>Analiz tutarlı mı?<br><b>Raporla.</b></h2>
+            <p>Biten maçlar, skor, analiz tutarlılığı ve AI maç sonrası özeti ayrı bölümde tutulur.</p>
+          </div>
+          <div class="access">
+            <strong id="resultsMinutes">0</strong>
+            <small>dk açık</small>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <button class="primary" onclick="openAd('results')">🎬 5 dk sonuç detayı</button>
+          <button class="ghost" onclick="openLegal()">Yasal</button>
+        </div>
+      </section>
+
+      <section class="stats">
+        <article><span>Bugün biten</span><strong>4</strong></article>
+        <article><span>Tutan analiz</span><strong>3</strong></article>
+        <article><span>Başarı</span><strong>%75</strong></article>
+      </section>
+
+      <section class="section-head">
+        <div>
+          <h3>Maç Sonuçları</h3>
+          <p>Analiz ve gerçek sonuç karşılaştırması.</p>
+        </div>
+        <span>Demo sonuç</span>
+      </section>
+
+      <section class="cards result-row" id="resultsList"></section>
+    </section>
+    <!-- HAFTALIK SONUCLAR -->
+    <section class="page" id="weeklyPage">
+      <section class="hero results">
+        <div class="hero-grid">
+          <div>
+            <span class="eyebrow">Son 7 gün raporu</span>
+            <h2>Haftalık maç<br><b>performansı.</b></h2>
+            <p>Bir haftalık maç sonuçları, tutarlılık oranı, lig bazlı başarı ve AI haftalık özet tek pencerede.</p>
+          </div>
+          <div class="access">
+            <strong id="weeklyMinutes">0</strong>
+            <small>dk açık</small>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <button class="primary" onclick="openAd('weekly')">🎬 5 dk haftalık rapor</button>
+          <button class="ghost" onclick="openLegal()">Yasal</button>
+        </div>
+      </section>
+
+      <section class="pulse three">
+        <article><span>7 günde maç</span><strong id="weeklyTotal">--</strong><small>Analiz edilmiş maç</small></article>
+        <article><span>Tutan analiz</span><strong id="weeklyHit">--</strong><small>Doğru/kısmi doğru</small></article>
+        <article><span>Başarı</span><strong id="weeklyRate">--</strong><small>Haftalık başarı</small></article>
+      </section>
+
+      <section class="warning">
+        <b>Haftalık şeffaflık:</b> MaçAI sadece analiz sunmaz; geçen haftaki analiz performansını da kullanıcıya gösterir. Bu güven oluşturur.
+      </section>
+
+      <nav class="tabs" id="weeklyTabs">
+        <button class="active" data-filter="all">7 Gün</button>
+        <button data-filter="hit">Tutanlar</button>
+        <button data-filter="miss">Kaçanlar</button>
+        <button data-filter="partial">Kısmi Tutan</button>
+        <button data-filter="league">Lig Özeti</button>
+      </nav>
+
+      <section class="stats">
+        <article><span>En iyi pazar</span><strong>1X</strong></article>
+        <article><span>Zayıf pazar</span><strong>KG</strong></article>
+        <article><span>AI kredi</span><strong id="weeklyCredits">0</strong></article>
+      </section>
+
+      <section class="section-head">
+        <div>
+          <h3 id="weeklyTitle">Son 7 Gün</h3>
+          <p id="weeklyDesc">Oynanan maçlar ve analiz sonuçları.</p>
+        </div>
+        <span>Haftalık demo</span>
+      </section>
+
+      <section class="engine">
+        <h3>7 günlük performans grafiği</h3>
+        <div class="calendar-grid">
+          <div class="day-pill"><strong>Pzt</strong><span>3/4</span></div>
+          <div class="day-pill"><strong>Sal</strong><span>2/3</span></div>
+          <div class="day-pill"><strong>Çar</strong><span>4/5</span></div>
+          <div class="day-pill"><strong>Per</strong><span>1/3</span></div>
+          <div class="day-pill"><strong>Cum</strong><span>5/6</span></div>
+          <div class="day-pill"><strong>Cmt</strong><span>6/8</span></div>
+          <div class="day-pill"><strong>Paz</strong><span>4/5</span></div>
+        </div>
+        <div class="week-chart">
+          <div class="week-bar">
+            <div class="week-bar-top"><span>Süper Lig</span><strong>%72</strong></div>
+            <div class="week-line" style="--w:72%"><i></i></div>
+          </div>
+          <div class="week-bar">
+            <div class="week-bar-top"><span>Premier League</span><strong>%68</strong></div>
+            <div class="week-line" style="--w:68%"><i></i></div>
+          </div>
+          <div class="week-bar">
+            <div class="week-bar-top"><span>La Liga</span><strong>%75</strong></div>
+            <div class="week-line" style="--w:75%"><i></i></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="cards result-row" id="weeklyList"></section>
+
+      <section class="engine">
+        <h3>AI haftalık özet</h3>
+        <div class="engine-grid">
+          <div class="engine-box"><strong>En iyi sinyal</strong><span>Ev sahibi kaybetmez / 1X pazarı daha stabil çalıştı.</span></div>
+          <div class="engine-box"><strong>Riskli alan</strong><span>KG Var tahminleri kadro haberlerinden fazla etkilendi.</span></div>
+          <div class="engine-box"><strong>Canlı avantaj</strong><span>Canlı xG ve şut verisi olan maçlarda güven arttı.</span></div>
+          <div class="engine-box"><strong>Gelişim</strong><span>Kadro kesinleşmeden verilen maçlarda güven skoru düşürülmeli.</span></div>
+        </div>
+      </section>
+    </section>
+
+    <!-- PROFIL / AYARLAR -->
+    <section class="page" id="profilePage">
+      <section class="hero results">
+        <div class="hero-grid">
+          <div>
+            <span class="eyebrow">Uygulama ayarları</span>
+            <h2>Profil ve<br><b>yapılandırma.</b></h2>
+            <p>API bağlantısı, kredi durumu, gizlilik ve uygulama bilgileri.</p>
+          </div>
+          <div class="access">
+            <strong id="profileCredits">0</strong>
+            <small>AI kredi</small>
+          </div>
+        </div>
+      </section>
+
+      <section class="engine" style="margin-top:12px">
+        <h3>💎 VIP Üyelik</h3>
+        <div id="vipStatusBox" class="engine-box" style="cursor:pointer;text-align:center;padding:16px" onclick="showVipModal()">
+          <strong id="vipStatusLabel">VIP Değil</strong>
+          <span id="vipStatusDesc">Reklamsız ve sınırsız kullanım için <span class="vip-price">800 ₺</span>/ay</span>
+        </div>
+      </section>
+
+      <section class="engine" style="margin-top:12px">
+        <h3>Kredi Durumu</h3>
+        <div class="engine-grid">
+          <div class="engine-box"><strong>PiyasaAI</strong><span id="pCredits">0 kredi</span></div>
+          <div class="engine-box"><strong>MaçAI</strong><span id="mCredits">0 kredi</span></div>
+          <div class="engine-box"><strong>Tuzak Radar</strong><span id="tCredits">0 kredi</span></div>
+          <div class="engine-box"><strong>Haber/Diğer</strong><span id="oCredits">0 kredi</span></div>
+        </div>
+      </section>
+
+      <section class="engine" style="margin-top:12px">
+        <h3>Hakkında</h3>
+        <div class="engine-grid">
+          <div class="engine-box"><strong>Sürüm</strong><span>v8.0.0</span></div>
+          <div class="engine-box"><strong>Yapı</strong><span>Capacitor + NestJS</span></div>
+          <div class="engine-box" style="cursor:pointer" onclick="openLegal()"><strong>📜 Gizlilik Politikası</strong><span>Dokunarak okuyun</span></div>
+          <div class="engine-box"><strong>Geliştirici</strong><span>PiyasaAI Ekibi</span></div>
+        </div>
+      </section>
+
+      <section class="legal-card" style="margin-top:12px">
+        <h3>⚠️ Yasal Uyarı</h3>
+        <p>Bu uygulama yatırım tavsiyesi veya kazanç garantisi vermez. Tüm veriler bilgilendirme amaçlıdır.</p>
+      </section>
+
+      <section class="legal-card" style="margin-top:8px;border-color:rgba(255,93,122,.25)">
+        <p style="font-size:12px;color:var(--red);text-align:center;margin:0">🔞 18+ Yaş Sınırı — Bu uygulama yalnızca 18 yaş ve üzeri kullanıcılar içindir.</p>
+      </section>
+    </section>
+
+  </main>
+
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="active" data-action="radar">α<span>Radar</span></button>
+    <button data-action="trend">📈<span>Trend</span></button>
+    <button data-action="ai">🤖<span>AI</span></button>
+    <button data-action="profil">👤<span>Profil</span></button>
+  </nav>
+
+  <!-- MODALS -->
+  <div class="modal" id="adModal">
+    <div class="modal-card">
+      <div class="ad-visual"><span id="adTimer">⏳</span></div>
+      <h3 id="adTitle">🔒 Ücretsiz Sürüm</h3>
+      <p id="adText">Reklam tamamlanınca bu panel için 2 dakika detay erişimi ve 1 AI kredisi açılır.</p>
+      <div class="modal-actions" style="flex-direction:column;gap:6px">
+        <button class="primary" id="claimRewardBtn" disabled style="width:100%">Bekle...</button>
+        <button class="ghost" onclick="closeAd();showVipModal()" style="width:100%;border-color:rgba(35,209,139,.3);color:var(--green)">💎 VIP ol — sınırsız erişim <span class="vip-price">800 ₺</span>/ay</button>
+        <button class="ghost" id="cancelAdBtn" style="width:100%">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="detailModal">
+    <div class="modal-card">
+      <h3 id="detailTitle">Detay</h3>
+      <p id="detailText">Detay</p>
+      <div id="detailBullets" class="detail-list"></div>
+      <div class="modal-actions" style="margin-top:14px">
+        <button class="ghost" onclick="closeDetail()">Kapat</button>
+        <button class="primary" onclick="favoriteSelected()">Takibe al</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="legalModal">
+    <div class="modal-card legal-modal">
+      <h3>Yasal Uyarı ve Kullanım Sınırları</h3>
+      <p>
+        Bu uygulamadaki piyasa skorları, maç tahminleri, haber etki analizleri ve AI yorumları genel bilgilendirme/eğitim amaçlıdır.
+        Kesin sonuç veya kazanç garantisi değildir, yatırım tavsiyesi içermez.
+      </p>
+      <h4>Uygulama sınırları</h4>
+      <ul>
+        <li>PiyasaAI alım-satım emri vermez ve portföy yönetmez.</li>
+        <li>MaçAI yalnızca istatistiksel veri analizi sunar, gerçek para işlemi yapmaz.</li>
+        <li>Reklam izleme kullanıcının açık seçimiyle yapılır.</li>
+        <li>API anahtarları frontend içinde tutulmaz; kendi domain/backend üzerinden çağrılır.</li>
+        <li>BIST ve maç verileri sağlayıcı/lisans durumuna göre gecikmeli veya canlı olabilir.</li>
+      </ul>
+      <div class="modal-actions" style="margin-top:14px">
+        <button class="ghost" onclick="closeLegal()">Kapat</button>
+        <button class="primary" onclick="acceptLegal()">Anladım</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="vipModal">
+    <div class="modal-card" style="max-width:380px;text-align:center">
+      <div style="font-size:48px;margin-bottom:8px">💎</div>
+      <h3>VIP'e Özel</h3>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:4px">Reklamsız, sınırsız, tam yetkili. <span class="vip-price">800 ₺</span>/ay</p>
+      <p style="font-size:12px;color:var(--yellow);margin-bottom:16px">⭐ Ücretsiz kullanıcı: her panel için reklam + 2dk süre</p>
+      <div style="background:rgba(35,209,139,.08);border-radius:12px;padding:16px;margin-bottom:16px;text-align:left">
+        <div style="display:flex;justify-content:space-between;padding:4px 0"><span>🚫 Reklam</span><span style="color:var(--green)">Hiç yok</span></div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0"><span>🤖 AI kredisi</span><span style="color:var(--green)">Sınırsız</span></div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0"><span>📊 Panel detayı</span><span style="color:var(--green)">Anında erişim</span></div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0"><span>🔓 Tüm veriler</span><span style="color:var(--green)">Tam açık</span></div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;border-top:1px solid rgba(255,255,255,.06);margin-top:4px;padding-top:6px"><span>💳 Ücretsiz</span><span style="color:var(--red)">Kısıtlı + reklam</span></div>
+      </div>
+      <input type="email" id="vipEmail" placeholder="E-posta adresiniz" style="margin-bottom:8px" />
+      <input type="tel" id="vipPhone" placeholder="Telefon (5xx...)" style="margin-bottom:12px" />
+      <div class="modal-actions" style="flex-direction:column;gap:8px">
+        <button class="primary vip-btn-price" onclick="purchaseVip()" style="width:100%;padding:14px;font-size:15px">💎 800 ₺ ile VIP Ol</button>
+        <button class="ghost" onclick="closeVipModal()" style="width:100%">İptal</button>
+      </div>
+      <p style="font-size:11px;color:var(--muted);margin-top:12px">Ödeme Shopier tarafından güvenli şekilde işlenir. Kart, mobil ödeme ve EFT ile ödeyebilirsiniz.</p>
+    </div>
+  </div>
+
+  <div class="modal" id="ageGateModal">
+    <div class="modal-card" style="text-align:center;max-width:340px">
+      <div style="font-size:48px;margin-bottom:8px">🔞</div>
+      <h3>18+ Yaş Sınırı</h3>
+      <p style="font-size:13px">Bu uygulama yalnızca 18 yaş ve üzeri kullanıcılar içindir. Finansal piyasa verileri ve maç istatistiksel analizleri sunar.</p>
+      <div class="modal-actions" style="flex-direction:column;gap:8px;margin-top:14px">
+        <button class="primary" onclick="acceptAgeGate()" style="width:100%">18 yaşından büyüğüm</button>
+        <button class="ghost" onclick="rejectAgeGate()" style="width:100%">Çık</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const API_BASE = localStorage.getItem('api_base') || 'http://localhost:3000';
+    const USE_API = localStorage.getItem('use_api') === 'true';
+
+    function ageGateCheck(){
+      if(localStorage.getItem('age_verified') === 'true') return;
+      document.getElementById('ageGateModal').classList.add('show');
+    }
+    function acceptAgeGate(){
+      localStorage.setItem('age_verified', 'true');
+      document.getElementById('ageGateModal').classList.remove('show');
+    }
+    function rejectAgeGate(){
+      // Kullanıcıyı bilgilendir ve uygulamayı kapat
+      document.getElementById('ageGateModal').classList.remove('show');
+      document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#03070b;color:#f3fbff;font-family:system-ui;text-align:center;padding:40px"><div><h1 style="font-size:48px;margin-bottom:12px">🔞</h1><h2>Üzgünüz</h2><p style="color:#8eabba;margin-top:8px">Bu uygulama 18 yaş altı kullanıcılar için uygun değildir.</p></div></div>';
+    }
+
+    async function apiGet(path) {
+      if (!USE_API) return null;
+      try {
+        const res = await fetch(API_BASE + path);
+        if (!res.ok) return null;
+        return await res.json();
+      } catch { return null; }
+    }
+
+    async function apiPost(path, body) {
+      if (!USE_API) return null;
+      try {
+        const res = await fetch(API_BASE + path, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+        if (!res.ok) return null;
+        return await res.json();
+      } catch { return null; }
+    }
+
+    const marketData = [
+      {
+        id:"sol", symbol:"SOL", name:"Solana", market:"Global Kripto", kinds:["bull","watch"],
+        price:"$142.80", alpha:84, upProb:72, downProb:28, confidence:"Orta-Yüksek", risk:"Orta",
+        signal:"Boğa geçiş adayı", summary:"Trend kırılımına hacimli yaklaşım var.",
+        valid:"4 saat", source:"CoinGecko + Binance market data",
+        tags:["EMA20 üstü","Hacim x2.1","RSI 59","Direnç yakın"],
+        reasons:["Fiyat kısa vadeli ortalamaların üzerinde kalıyor.","Hacim artışı fiyat hareketini destekliyor.","RSI aşırı alımda değil, hareket alanı var.","Direnç üstü kapanışta skor 90+ bölgesine çıkabilir."]
+      },
+      {
+        id:"arb", symbol:"ARB", name:"Arbitrum", market:"Global Kripto", kinds:["bull"],
+        price:"$0.91", alpha:73, upProb:64, downProb:36, confidence:"Orta", risk:"Orta",
+        signal:"Dipten dönüş adayı", summary:"Düşüş sonrası momentum toparlanıyor.",
+        valid:"6 saat", source:"CoinGecko + OHLC",
+        tags:["RSI 48","Dip bölge","Hacim x1.4","Trend nötr+"],
+        reasons:["Aşırı satıştan çıkış bölgesi izleniyor.","Hacim henüz patlamadı ama toparlanma var.","Direnç teyidi gelmeden güçlü al sinyali sayılmaz.","Risk/ödül oranı izlemeye değer."]
+      },
+      {
+        id:"nova", symbol:"NOVA", name:"Nova Token", market:"Yeni DEX Token", kinds:["newcrypto","bear"],
+        price:"$0.0042", alpha:61, upProb:44, downProb:56, confidence:"Düşük", risk:"Yüksek",
+        signal:"Riskli pump alarmı", summary:"Hareket güçlü ama likidite ve holder riski zayıf.",
+        valid:"1 saat", source:"DEX Screener",
+        tags:["Yeni token","Likidite düşük","Holder riski","Pump riski"],
+        reasons:["Hacim artışı var fakat likidite düşük.","Yeni token olduğu için rug/pump riski yüksek.","Sosyal ilgi artışı fiyata yansımış olabilir.","Risk filtresi nedeniyle boğa adayı listesine alınmaz."]
+      },
+      {
+        id:"aix", symbol:"AIX", name:"AIx Launch", market:"Yeni Kripto", kinds:["newcrypto"],
+        price:"Liste öncesi", alpha:68, upProb:58, downProb:42, confidence:"Düşük-Orta", risk:"Yüksek",
+        signal:"Yaklaşan listeleme", summary:"AI temalı yeni token, ilk likidite sonrası skorlanacak.",
+        valid:"Listeleme günü", source:"Launchpad + DEX Screener",
+        tags:["3 gün sonra","AI teması","Likidite bekleniyor","Whitelist"],
+        reasons:["Henüz fiyat/hacim oluşmadı, bu yüzden kesin sinyal değil.","Listeleme sonrası ilk 30 dakika likidite takip edilmeli.","Kontrat doğrulama ve holder dağılımı kontrol edilmeden güçlü sinyal verilmez.","Tema güçlü ama ilk işlem riski yüksek."]
+      },
+      {
+        id:"betae", symbol:"BETAE", name:"Beta Enerji", market:"Yeni Hisse / Halka Arz", kinds:["ipo"],
+        price:"₺40.00 arz", alpha:66, upProb:60, downProb:40, confidence:"Düşük-Orta", risk:"Orta-Yüksek",
+        signal:"Halka arz takip adayı", summary:"Talep toplama sonrası ilk işlem hacmi izlenecek.",
+        valid:"İlk 3 işlem günü", source:"KAP/SPK + halka arz verisi",
+        tags:["Enerji sektörü","Bireysele eşit","Arz takvimi","İlk işlem takip"],
+        reasons:["Halka arzlarda fiyat geçmişi sınırlı olduğu için teknik sinyal oluşmaz.","İlk işlem günü hacim, tavan/çözülme ve emir derinliği izlenmeli.","Arz büyüklüğü ve sektör ilgisi alpha skorunu etkiler.","Kullanıcıya al demeyiz; ilk işlem sonrası takip senaryosu veririz."]
+      },
+      {
+        id:"thy", symbol:"THYAO", name:"Türk Hava Yolları", market:"BIST", kinds:["bull","watch"],
+        price:"₺301.50", alpha:70, upProb:62, downProb:38, confidence:"Orta", risk:"Orta",
+        signal:"Kapanış teyidi bekliyor", summary:"Hacim destekli trend pozitife dönüyor.",
+        valid:"Günlük kapanış", source:"BIST gecikmeli/EOD",
+        tags:["BIST","Hacim x1.25","RSI 55","Direnç takip"],
+        reasons:["Günlük kapanış tarafında pozitif görünüm var.","Hacim ortalamanın hafif üzerinde.","Direnç üstü kapanış sinyal gücünü artırır.","BIST verisi lisans durumuna göre gecikmeli gösterilir."]
+      },
+      {
+        id:"btctry", symbol:"BTCTRY", name:"Bitcoin / TL", market:"Yerli Borsa", kinds:["local","bull"],
+        price:"₺2.115M", alpha:78, upProb:67, downProb:33, confidence:"Orta", risk:"Orta",
+        signal:"Yerli talep güçleniyor", summary:"TRY paritesi hacmi globalden pozitif ayrışıyor.",
+        valid:"2 saat", source:"BtcTurk/Binance TR ticker",
+        tags:["TRY paritesi","Yerli hacim","Spread takip","Fiyat farkı"],
+        reasons:["Yerli borsada TRY tarafı hacimleniyor.","Global fiyatla yerli parite arasındaki fark takip edilebilir.","Spread açılırsa risk artar.","Bu veri arbitraj vaadi değil, piyasa talep göstergesidir."]
+      },
+      {
+        id:"ethtry", symbol:"ETHTRY", name:"Ethereum / TL", market:"Yerli Borsa", kinds:["local","bear"],
+        price:"₺103.800", alpha:49, upProb:43, downProb:57, confidence:"Orta", risk:"Orta",
+        signal:"Zayıf talep riski", summary:"Yerli hacim düşük, kısa vadede satış baskısı önde.",
+        valid:"2 saat", source:"BtcTurk/Paribu market data",
+        tags:["TRY paritesi","Hacim zayıf","RSI 47","Talep düşük"],
+        reasons:["Yerli paritede hacim zayıf kalıyor.","Global hareket yerli talep tarafından desteklenmiyor.","Düşüş ihtimali yükseliş ihtimalinden yüksek görünüyor.","Takip için hacim artışı beklenmeli."]
+      }
+    ];
+
+    const marketCopy = {
+      all:["Alpha Radar","Herkesin verdiği fiyat değil; dikkat çeken adaylar."],
+      bull:["Boğa Adayları","Yükseliş ihtimali ve alpha skoru yüksek olanlar."],
+      bear:["Düşüş Riski","Satış baskısı, pump riski veya zayıf talep görünenler."],
+      newcrypto:["Yeni Kriptolar","Yeni listelenen, çıkacak veya listeleme bekleyen tokenlar."],
+      ipo:["Yeni Hisseler","Halka arz / yeni işlem görecek şirket takip ekranı."],
+      local:["Yerli Fırsatlar","TRY paritesi, yerli hacim ve fiyat farkı adayları."],
+      watch:["Takip Listesi","Kullanıcının takibe aldığı adaylar."]
+    };
+
+    const matchData = [
+      {
+        id:"fb-ts", home:"Fenerbahçe", away:"Trabzonspor", league:"Süper Lig", time:"Canlı 63'", score:"1-0", filter:["six","live","ai"],
+        confidence:78, result:"1X", market:"Ev sahibi kaybetmez", ms:"1X", goals:"2.5 Üst eğilim", kg:"KG Var %58", scorePred:"2-1",
+        homeProb:56, drawProb:25, awayProb:19, risk:"Orta", source:"API-Football live + stats",
+        tags:["xG 1.42-0.51","Şut 11-4","Topla oynama %61","Canlı momentum"],
+        reasons:["Ev sahibi xG ve şut üstünlüğü kurmuş durumda.","Trabzonspor geçişlerde tehdit üretiyor, bu yüzden KG Var tamamen düşük değil.","Canlı kırmızı kart veya sakatlık olursa tahmin iptal/yeniden hesaplanır.","Bu analiz kesin sonuç değildir."]
+      },
+      {
+        id:"gs-kay", home:"Galatasaray", away:"Kayserispor", league:"Süper Lig", time:"20:00", score:"Başlamadı", filter:["six","ai","goals"],
+        confidence:74, result:"1 & 1.5 Üst", market:"Ev sahibi + gol", ms:"1", goals:"1.5 Üst %72", kg:"KG Yok %54", scorePred:"2-0",
+        homeProb:68, drawProb:20, awayProb:12, risk:"Orta", source:"API-Football fixtures + form",
+        tags:["Form 4G-1B","İç saha güçlü","Rakip eksik","1.5 üst"],
+        reasons:["Galatasaray iç saha formu ve hücum üretimiyle önde.","Rakibin deplasman savunma verisi zayıf.","KG Var yerine ev sahibi gol ağırlıklı senaryo daha mantıklı.","Kadro kesinleşmeden güven skoru sabit sayılmaz."]
+      },
+      {
+        id:"bjk-ads", home:"Beşiktaş", away:"Adana DS", league:"Süper Lig", time:"21:30", score:"Başlamadı", filter:["six","risk","goals"],
+        confidence:59, result:"KG Var", market:"Gollü ama riskli", ms:"Kararsız", goals:"2.5 Üst %55", kg:"KG Var %64", scorePred:"2-2",
+        homeProb:38, drawProb:29, awayProb:33, risk:"Yüksek", source:"API-Football + team form",
+        tags:["Savunma zayıf","KG eğilimi","MS belirsiz","Risk yüksek"],
+        reasons:["İki takımda da gol üretme potansiyeli var fakat maç sonucu tarafında güven düşük.","Savunma verileri KG Var pazarını destekliyor.","MS seçimi yerine gol pazarı daha anlamlı görünüyor.","Risk yüksek olduğu için güçlü maç listesine alınmaz."]
+      },
+      {
+        id:"ars-che", home:"Arsenal", away:"Chelsea", league:"Premier League", time:"18:30", score:"Başlamadı", filter:["six","ai"],
+        confidence:71, result:"1X", market:"Ev sahibi tarafı", ms:"1X", goals:"2.5 Alt/Üst sınır", kg:"KG Var %52", scorePred:"1-1 / 2-1",
+        homeProb:50, drawProb:28, awayProb:22, risk:"Orta", source:"API-Football standings + form",
+        tags:["Büyük maç","Tempo değişken","Ev avantajı","1X"],
+        reasons:["Ev sahibi form ve saha avantajı nedeniyle önde.","Derbi/büyük maç dinamiği sonucu zorlaştırıyor.","Tahmin skoru tek skor değil, senaryo aralığı olarak verilir.","Güven yüksek değil, kontrollü analiz."]
+      },
+      {
+        id:"real-sev", home:"Real Madrid", away:"Sevilla", league:"La Liga", time:"22:00", score:"Başlamadı", filter:["six","ai","goals"],
+        confidence:80, result:"1", market:"Güçlü ev sahibi", ms:"1", goals:"2.5 Üst %61", kg:"KG Yok %51", scorePred:"3-1",
+        homeProb:72, drawProb:18, awayProb:10, risk:"Düşük-Orta", source:"API-Football predictions + form",
+        tags:["Form üstün","Ev sahibi","Gol beklentisi","Güçlü güven"],
+        reasons:["Ev sahibi form, kadro kalitesi ve saha avantajı belirgin.","Sevilla savunma kırılganlığı gol beklentisini artırıyor.","Güven skoru günün en yükseklerinden biri.","Oran değişimi ve ilk 11 sonrası tekrar hesaplanmalı."]
+      },
+      {
+        id:"int-laz", home:"Inter", away:"Lazio", league:"Serie A", time:"Canlı 31'", score:"0-0", filter:["six","live","risk"],
+        confidence:62, result:"2. yarı gol", market:"Canlı gol bekleme", ms:"1X", goals:"1.5 Üst canlı", kg:"KG Düşük", scorePred:"1-0",
+        homeProb:57, drawProb:30, awayProb:13, risk:"Orta", source:"API-Football live stats",
+        tags:["Canlı 0-0","Şut az","2. yarı tempo","Sarı kart 2"],
+        reasons:["İlk yarı tempo düşük, fakat ev sahibi baskısı artıyor.","Canlı veri 2. yarı gol ihtimalini öne çıkarıyor.","Maç sonucu yerine canlı gol senaryosu izlenmeli.","Tempo artmazsa tahmin geçersizleşir."]
+      }
+    ];
+
+    const matchCopy = {
+      six:["Günün 6 Maçı","API verisinden seçilmiş, analiz değeri olan günlük limitli maçlar."],
+      live:["Canlı Maçlar","Skor, dakika, xG ve momentum canlı takip."],
+      ai:["AI Güçlü","Güven skoru 70+ olan maçlar."],
+      goals:["Gol Pazarı","KG, üst/alt ve skor senaryosu öne çıkan maçlar."],
+      risk:["Riskli Maç","Sonuç tahmini belirsiz, fakat izleme değeri olanlar."]
+    };
+
+    const newsData = [
+      {
+        id:"n1", type:["all","football","injury","impact"], icon:"📰",
+        title:"Galatasaray’da forvet belirsizliği",
+        summary:"Muhtemel ilk 11 değişikliği, maç sonucu güven skorunu %74’ten %68’e düşürebilir.",
+        tags:["Kadro","AI Etki","Süper Lig"], impact:"Tahmin güveni düşer"
+      },
+      {
+        id:"n2", type:["all","football","impact"], icon:"📊",
+        title:"Fenerbahçe maçında canlı xG farkı açılıyor",
+        summary:"Ev sahibi xG ve şut üstünlüğü nedeniyle canlı 1X senaryosu güçleniyor.",
+        tags:["Canlı","xG","Momentum"], impact:"Canlı tahmin güçlenir"
+      },
+      {
+        id:"n3", type:["all","market","impact"], icon:"🚀",
+        title:"Yeni AI token listeleme takvimi yaklaştı",
+        summary:"AIx Launch için ilk likidite ve holder dağılımı listeleme günü skorlanacak.",
+        tags:["Yeni Kripto","Listeleme","Risk"], impact:"Listeleme alarmı"
+      },
+      {
+        id:"n4", type:["all","market"], icon:"🏛️",
+        title:"Yeni halka arzda ilk işlem günü takip edilecek",
+        summary:"Talep yoğunluğu ve ilk 3 işlem günü hacmi alpha skorunu belirleyecek.",
+        tags:["Halka Arz","BIST","Yeni Hisse"], impact:"İlk işlem alarmı"
+      },
+      {
+        id:"n5", type:["all","injury","football"], icon:"⛑️",
+        title:"Premier League maçında savunma eksikleri",
+        summary:"Chelsea tarafında eksik savunma oyuncuları KG Var ihtimalini yükseltiyor.",
+        tags:["Sakatlık","Premier League","Gol Pazarı"], impact:"KG Var artar"
+      }
+    ];
+
+    const resultsData = [
+      {
+        id:"r1", home:"Beşiktaş", away:"Konyaspor", league:"Süper Lig", final:"2-1",
+        prediction:"1 & 1.5 Üst", status:"Tahmin tuttu", confidence:69,
+        tags:["MS 1","2.5 Üst","KG Var"], reasons:["Ev sahibi xG üstünlüğü skora yansıdı.","Maç önü 1 & 1.5 üst senaryosu doğru çalıştı.","AI maç sonrası raporu reklam sonrası açılır."]
+      },
+      {
+        id:"r2", home:"Roma", away:"Torino", league:"Serie A", final:"0-0",
+        prediction:"1X", status:"Kısmi tuttu", confidence:61,
+        tags:["1X tuttu","Gol tahmini zayıf"], reasons:["Maç sonucu tarafında risk korunmuş oldu.","Gol pazarı beklentisi karşılık bulmadı.","Tempo düşük kaldığı için canlı revizyon gerekirdi."]
+      },
+      {
+        id:"r3", home:"PSG", away:"Lyon", league:"Ligue 1", final:"3-1",
+        prediction:"1 & 2.5 Üst", status:"Tahmin tuttu", confidence:77,
+        tags:["MS 1","Üst tuttu","Güçlü güven"], reasons:["Ev sahibi baskısı erken golle başladı.","Şut ve xG üstünlüğü tahmini destekledi.","Günün başarılı yüksek güvenli analizlerinden biri."]
+      }
+    ];
+
+
+
+    const trapData = [
+      {
+        id:"t-nova", kind:"market", type:["all","market","pump"], title:"NOVA / Yeni DEX Token", subtitle:"Riskli pump alarmı",
+        score:74, crowd:88, data:41, trap:71, risk:"Yüksek", label:"Kalabalık pump’a koşuyor",
+        crowdView:"Fiyat +38%, sosyal ilgi yüksek, yeni token heyecanı var.",
+        dataView:"Likidite düşük, holder yoğunluğu riskli, hacim var ama alış kalitesi zayıf.",
+        result:"Uzak dur / sadece izle. Boğa adayı değil, riskli pump.",
+        tags:["Likidite tuzağı","Holder riski","Yeni token","Pump riski"],
+        ifThen:["Eğer likidite 250K$ üstüne çıkar ve holder dağılımı düzelirse risk azalır.","Eğer hacim düşerken fiyat şişmeye devam ederse tuzak skoru 85+ olur."]
+      },
+      {
+        id:"t-arb", kind:"market", type:["all","market","quiet"], title:"ARB / Arbitrum", subtitle:"Sessiz boğa hazırlığı",
+        score:79, crowd:32, data:76, trap:18, risk:"Orta", label:"Kalabalık henüz fark etmedi",
+        crowdView:"Fiyat yatay, sosyal ilgi düşük, büyük hareket yok gibi görünüyor.",
+        dataView:"Hacim tabanı yükseliyor, RSI toparlanıyor, satış baskısı azalıyor.",
+        result:"Sessiz izleme adayı. Kalabalık gelmeden önce alarm kurulmalı.",
+        tags:["Sessiz boğa","Hacim tabanı","RSI dönüş","Direnç alarmı"],
+        ifThen:["Eğer 0.94 üstü hacimli kapanış gelirse alpha skoru 88’e çıkar.","Eğer hacim düşer ve fiyat dip altına sarkarsa sinyal iptal olur."]
+      },
+      {
+        id:"t-sol", kind:"market", type:["all","market","quiet"], title:"SOL / Solana", subtitle:"Kırılım öncesi tuzak kontrolü",
+        score:82, crowd:67, data:81, trap:29, risk:"Orta", label:"Boğa güçlü ama teyit şart",
+        crowdView:"Kalabalık SOL tarafında pozitif, kısa vadeli boğa beklentisi var.",
+        dataView:"Hacim destekli trend var fakat direnç bölgesine yaklaşılmış durumda.",
+        result:"Boğa adayı; ama direnç üstü kapanış gelmeden agresif yorum yapılmaz.",
+        tags:["Direnç testi","Hacim x2.1","Boğa teyidi","İptal seviyesi"],
+        ifThen:["Eğer 145 üstü hacimli kalırsa boğa skoru güçlenir.","Eğer 139 altına hacimli iner ise sinyal iptal edilir."]
+      },
+      {
+        id:"t-gs", kind:"match", type:["all","match","lineup","odds"], title:"Galatasaray - Kayserispor", subtitle:"Favori / erken gol tuzağı",
+        score:72, crowd:84, data:58, trap:63, risk:"Orta-Yüksek", label:"Kalabalık farklı galibiyet bekliyor",
+        crowdView:"MS 1 ve 2.5 üst popüler. Kalabalık erken gol ve rahat galibiyet bekliyor.",
+        dataView:"Forvet belirsizliği, rakibin düşük blok oyunu ve ilk yarı tempo riski var.",
+        result:"MS 1 yerine 1 & 1.5 üst veya ikinci yarı gol daha kontrollü senaryo.",
+        tags:["Kadro tuzağı","Favori tuzağı","İlk yarı gol riski","Düşük blok"],
+        ifThen:["Eğer ilk 20 dakikada ev sahibi 5+ şut bulursa üst ihtimali artar.","Eğer ilk yarı xG 0.40 altında kalırsa 2.5 üst zayıflar."]
+      },
+      {
+        id:"t-bjk", kind:"match", type:["all","match","odds"], title:"Beşiktaş - Adana DS", subtitle:"KG Var kalabalık tuzağı",
+        score:69, crowd:79, data:52, trap:64, risk:"Yüksek", label:"Gol pazarı popüler ama riskli",
+        crowdView:"İki takım savunması zayıf göründüğü için KG Var çok popüler.",
+        dataView:"Maç sonucu belirsiz, tempo dalgalı ve ilk 11’e göre gol verisi değişebilir.",
+        result:"KG Var tek başına temiz değil. Canlı tempo görülmeden güçlü sayılmaz.",
+        tags:["KG Var tuzağı","Tempo riski","MS kararsız","Canlı bekle"],
+        ifThen:["Eğer ilk 15 dakikada iki taraf toplam 4+ şut bulursa KG güçlenir.","Eğer maç düşük tempoda başlarsa KG tuzak skoru 75+ olur."]
+      },
+      {
+        id:"t-inter", kind:"match", type:["all","match","live"], title:"Inter - Lazio", subtitle:"Canlı 0-0 gol tuzağı",
+        score:66, crowd:71, data:49, trap:59, risk:"Orta", label:"Canlı gol beklentisi acele olabilir",
+        crowdView:"0-0 devam ettiği için ikinci yarı gol beklentisi artıyor.",
+        dataView:"Şut az, xG düşük, tempo yükselmeden gol tahmini zayıf kalıyor.",
+        result:"Canlı gol için tempo teyidi beklenmeli. Sadece skor 0-0 diye üst alınmaz.",
+        tags:["Canlı tuzak","xG düşük","Tempo teyidi","2. yarı gol"],
+        ifThen:["Eğer 55. dakikaya kadar xG 0.90 üstüne çıkarsa gol ihtimali artar.","Eğer şut sayısı düşük kalırsa canlı gol sinyali iptal olur."]
+      }
+    ];
+
+    const trapCopy = {
+      all:["Tüm Tuzaklar","Kalabalık algısı ile veri sinyali ayrışan adaylar."],
+      market:["Piyasa Tuzakları","Pump, likidite, haber ve sessiz boğa ayrışmaları."],
+      match:["Maç Tuzakları","Favori, değer, kadro ve canlı momentum tuzakları."],
+      quiet:["Sessiz Boğa","Kalabalığın fark etmediği veri destekli adaylar."],
+      pump:["Riskli Pump","Yükselmiş görünen ama verisi zayıf adaylar."],
+      odds:["Değer Tuzağı","Popüler beklentinin yanıltıcı olduğu alanlar."],
+      lineup:["11 Tuzağı","İlk 11/sakatlık kaynaklı analiz bozulmaları."],
+      live:["Canlı Tuzak","Canlı skora bakıp acele karar verdiren durumlar."]
+    };
+
+
+    const weeklyData = [
+      {
+        id:"w1", day:"Pazartesi", home:"Fenerbahçe", away:"Sivasspor", league:"Süper Lig", final:"2-0",
+        prediction:"1X & 1.5 Üst", status:"Tuttu", type:["all","hit","league"], confidence:76,
+        tags:["1X tuttu","1.5 üst tuttu","Temiz skor"], reasons:["Ev sahibi baskısı erken başladı.","Savunma riski düşük kaldı.","AI güven skoru doğru çalıştı."]
+      },
+      {
+        id:"w2", day:"Salı", home:"Arsenal", away:"Chelsea", league:"Premier League", final:"1-1",
+        prediction:"1X", status:"Tuttu", type:["all","hit","league"], confidence:71,
+        tags:["1X tuttu","Derbi riski","Beraberlik"], reasons:["Ev sahibi kaybetmedi senaryosu doğruydu.","Derbi olduğu için MS 1 yerine 1X daha güvenliydi.","Gol pazarı kararsız kaldı."]
+      },
+      {
+        id:"w3", day:"Çarşamba", home:"Inter", away:"Lazio", league:"Serie A", final:"0-0",
+        prediction:"2. yarı gol", status:"Kaçtı", type:["all","miss"], confidence:62,
+        tags:["Canlı tahmin kaçtı","Tempo düşük","Gol yok"], reasons:["İkinci yarı tempo beklenen kadar yükselmedi.","Canlı şut verisi yanıltıcı kaldı.","Bu tip maçlarda güven skoru daha düşük tutulmalı."]
+      },
+      {
+        id:"w4", day:"Perşembe", home:"Real Madrid", away:"Sevilla", league:"La Liga", final:"3-1",
+        prediction:"1 & 2.5 Üst", status:"Tuttu", type:["all","hit","league"], confidence:80,
+        tags:["MS 1 tuttu","Üst tuttu","Güçlü güven"], reasons:["Ev sahibi form üstünlüğü belirgindi.","Sevilla savunma zayıflığı skora yansıdı.","Günün en temiz analizlerinden biri."]
+      },
+      {
+        id:"w5", day:"Cuma", home:"Beşiktaş", away:"Konyaspor", league:"Süper Lig", final:"2-1",
+        prediction:"1 & 1.5 Üst", status:"Tuttu", type:["all","hit","league"], confidence:69,
+        tags:["MS 1","1.5 üst","KG Var"], reasons:["Ev sahibi xG üstünlüğünü skora çevirdi.","1.5 üst pazarı güvenli çalıştı.","KG Var da desteklendi."]
+      },
+      {
+        id:"w6", day:"Cumartesi", home:"Roma", away:"Torino", league:"Serie A", final:"0-0",
+        prediction:"1X & 1.5 Üst", status:"Kısmi", type:["all","partial"], confidence:61,
+        tags:["1X tuttu","Gol kaçtı","Kısmi doğru"], reasons:["Maç sonucu tarafında risk korunmuş oldu.","Gol beklentisi karşılık bulmadı.","Düşük tempo maçları için ek filtre gerekli."]
+      },
+      {
+        id:"w7", day:"Pazar", home:"PSG", away:"Lyon", league:"Ligue 1", final:"3-1",
+        prediction:"1 & 2.5 Üst", status:"Tuttu", type:["all","hit"], confidence:77,
+        tags:["MS 1","Üst tuttu","Yüksek güven"], reasons:["Ev sahibi baskısı erken golle başladı.","Şut ve xG üstünlüğü tahmini destekledi.","Yüksek güvenli analiz doğru sonuçlandı."]
+      }
+    ];
+
+    const weeklyCopy = {
+      all:["Son 7 Gün","Oynanan maçlar ve analiz sonuçları."],
+      hit:["Tutanlar","Doğru çıkan analizler ve ortak sebepleri."],
+      miss:["Kaçanlar","Modelin yanıldığı maçlar ve iyileştirme notları."],
+      partial:["Kısmi Tutan","Bir pazarı doğru, diğer pazarı yanlış maçlar."],
+      league:["Lig Özeti","Liglere göre başarı ve risk ayrımı."]
+    };
+
+    const state = {
+      page:"market",
+      marketFilter:"all",
+      trapFilter:"all",
+      matchFilter:"six",
+      newsFilter:"all",
+      weeklyFilter:"all",
+      unlocks:{ market:null, match:null, news:null, results:null, weekly:null, trap:null },
+      credits:{ market:0, match:0, news:0, results:0, weekly:0, trap:0 },
+      timer:null,
+      adTarget:"market",
+      selected:null,
+      selectedType:null,
+      marketWatch:new Set(["sol","thy"]),
+      matchWatch:new Set(),
+      isVip:false,
+      vipEndDate:null,
+      vipPrice:800,
+      vipDeviceId:localStorage.getItem('device_id') || 'device-' + Math.random().toString(36).slice(2,10)
+    };
+    localStorage.setItem('device_id', state.vipDeviceId);
+
+    const $ = id => document.getElementById(id);
+    const els = {
+      marketCards:$("marketCards"), matchCards:$("matchCards"), newsList:$("newsList"), resultsList:$("resultsList"),
+      ad:$("adModal"), adTimer:$("adTimer"), claim:$("claimRewardBtn"), toast:$("toast"),
+      detail:$("detailModal"), detailTitle:$("detailTitle"), detailText:$("detailText"), detailBullets:$("detailBullets"),
+      legal:$("legalModal")
+    };
+
+    async function fetchVipPrice(){
+      try {
+        const res = await apiGet('/vip/price');
+        if (res && res.price) {
+          state.vipPrice = res.price;
+          updatePriceUI();
+        }
+      } catch {}
+    }
+
+    function updatePriceUI(){
+      const els = document.querySelectorAll('.vip-price');
+      els.forEach(el => { el.textContent = state.vipPrice + ' ₺'; });
+      const btns = document.querySelectorAll('.vip-btn-price');
+      btns.forEach(el => { el.textContent = '💎 ' + state.vipPrice + ' ₺ ile VIP Ol'; });
+    }
+
+    // VIP
+    async function checkVipStatus(){
+      try {
+        const res = await apiGet(`/vip/check?deviceId=${state.vipDeviceId}`);
+        if (res && res.isVip) {
+          state.isVip = true;
+          state.vipEndDate = res.endDate;
+        } else {
+          state.isVip = false;
+          state.vipEndDate = null;
+        }
+        updateVipUI();
+      } catch {}
+    }
+
+    function updateVipUI(){
+      const label = $("vipStatusLabel");
+      const desc = $("vipStatusDesc");
+      const box = $("vipStatusBox");
+      if (!label) return;
+      if (state.isVip) {
+        const days = state.vipEndDate ? Math.ceil((new Date(state.vipEndDate).getTime() - Date.now()) / 86400000) : '?';
+        label.textContent = '✅ VIP Aktif';
+        label.style.color = 'var(--green)';
+        desc.textContent = `Kalan gün: ${days} — Dokunarak detay`;
+        if (box) box.style.borderColor = 'rgba(35,209,139,.4)';
+      } else {
+        label.textContent = '💎 VIP Değil';
+        label.style.color = '';
+        desc.textContent = `Reklamsız ve sınırsız kullanım için ${state.vipPrice} ₺/ay`;
+        if (box) box.style.borderColor = '';
+      }
+    }
+
+    function showVipModal() {
+      if (state.isVip) {
+        showToast('Zaten VIP üyesiniz!');
+        return;
+      }
+      document.getElementById('vipModal').classList.add('show');
+    }
+
+    function closeVipModal() {
+      document.getElementById('vipModal').classList.remove('show');
+    }
+
+    async function purchaseVip() {
+      const email = document.getElementById('vipEmail').value.trim();
+      const phone = document.getElementById('vipPhone').value.trim();
+      if (!email && !phone) { showToast('E-posta veya telefon gerekli'); return; }
+      const btn = document.querySelector('#vipModal .primary');
+      btn.disabled = true;
+      btn.textContent = 'Yönlendiriliyor...';
+      try {
+        const res = await apiPost('/vip/create-payment', { deviceId: state.vipDeviceId, email: email || undefined, phone: phone || undefined });
+        if (res && res.paymentUrl) {
+          showToast('Ödeme sayfasına yönlendiriliyor...');
+          if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
+            window.open(res.paymentUrl, '_system');
+          } else {
+            window.open(res.paymentUrl, '_blank');
+          }
+        } else {
+          showToast(res?.message || 'Ödeme başlatılamadı');
+        }
+      } catch (e) {
+        showToast('Bağlantı hatası: ' + e.message);
+      }
+      btn.disabled = false;
+      btn.textContent = `💎 ${state.vipPrice} ₺ ile VIP Ol`;
+    }
+
+    // Check VIP status & price on load
+    setTimeout(checkVipStatus, 1500);
+    setTimeout(fetchVipPrice, 1000);
+
+    $("mainSegment").addEventListener("click", event => {
+      const btn = event.target.closest("button[data-page]");
+      if(!btn) return;
+      switchPage(btn.dataset.page);
+    });
+
+    // Bottom nav event delegation
+    $("bottomNav").addEventListener("click", event => {
+      const btn = event.target.closest("button[data-action]");
+      if(!btn) return;
+      handleNav(state.page, btn.dataset.action);
+    });
+
+    $("marketTabs").addEventListener("click", event => {
+      const btn = event.target.closest("button[data-filter]");
+      if(!btn) return;
+      document.querySelectorAll("#marketTabs button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      state.marketFilter = btn.dataset.filter;
+      renderMarket();
+    });
+
+    $("matchTabs").addEventListener("click", event => {
+      const btn = event.target.closest("button[data-filter]");
+      if(!btn) return;
+      document.querySelectorAll("#matchTabs button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      state.matchFilter = btn.dataset.filter;
+      renderMatches();
+    });
+
+
+    $("trapTabs").addEventListener("click", event => {
+      const btn = event.target.closest("button[data-filter]");
+      if(!btn) return;
+      document.querySelectorAll("#trapTabs button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      state.trapFilter = btn.dataset.filter;
+      renderTrap();
+    });
+
+    $("newsTabs").addEventListener("click", event => {
+      const btn = event.target.closest("button[data-filter]");
+      if(!btn) return;
+      document.querySelectorAll("#newsTabs button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      state.newsFilter = btn.dataset.filter;
+      renderNews();
+    });
+
+
+    $("weeklyTabs").addEventListener("click", event => {
+      const btn = event.target.closest("button[data-filter]");
+      if(!btn) return;
+      document.querySelectorAll("#weeklyTabs button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      state.weeklyFilter = btn.dataset.filter;
+      renderWeekly();
+    });
+
+    $("scanBtn").onclick = () => {
+      const label = state.page === "market" ? "PiyasaAI alpha radar tarandı" :
+                    state.page === "match" ? "MaçAI günlük 6 maç tarandı" :
+                    state.page === "trap" ? "Tuzak Radar çelişki taraması yaptı" :
+                    state.page === "news" ? "Haber etki akışı güncellendi" :
+                    state.page === "results" ? "Sonuç raporu güncellendi" :
+                    "Haftalık maç raporu güncellendi";
+      showToast(label);
+    };
+    $("cancelAdBtn").onclick = closeAd;
+    $("claimRewardBtn").onclick = claimReward;
+
+    function switchPage(page){
+      state.page = page;
+      document.querySelectorAll("#mainSegment button").forEach(b => b.classList.toggle("active", b.dataset.page === page));
+      ["market","match","trap","news","results","weekly","profile"].forEach(p => {
+        const el = $(p+"Page");
+        if (el) el.classList.toggle("active", p === page);
+      });
+      const titles = {
+        market:["α","PiyasaAI Alpha","Boğa/düşüş alpha radarı"],
+        match:["⚽","MaçAI Panel","Canlı skor + AI maç tahmini"],
+        trap:["🪤","Tuzak Radar","Kalabalık yanılıyor mu?"],
+        news:["📰","Haber Merkezi","Piyasa ve maç etki haberleri"],
+        results:["🏁","Sonuç Raporu","Tahmin ve gerçek sonuç karşılaştırması"],
+        weekly:["📅","Haftalık Rapor","Son 7 gün maç sonuçları ve performans"],
+        profile:["👤","Profil & Ayarlar","API, kredi ve uygulama bilgileri"]
+      };
+      $("brandLogo").textContent = titles[page][0];
+      $("brandTitle").textContent = titles[page][1];
+      $("brandSub").textContent = titles[page][2];
+      renderBottom();
+      updateMinutes();
+      if (page === "profile") renderProfile();
+    }
+
+    function renderBottom(){
+      const nav = $("bottomNav");
+      const maps = {
+        market:[["α","Radar"],["📈","Trend"],["🤖","AI"],["👤","Profil"]],
+        match:[["⚽","Maç"],["📡","Canlı"],["🤖","AI"],["⭐","Takip"]],
+        trap:[["🪤","Tuzak"],["📈","Piyasa"],["⚽","Maç"],["⚡","Şart"]],
+        news:[["📰","Haber"],["⚽","Maç"],["📈","Piyasa"],["🔥","Etki"]],
+        results:[["🏁","Sonuç"],["✅","Tutan"],["⚠️","Risk"],["📊","Rapor"]],
+        weekly:[["📅","Hafta"],["✅","Tutan"],["❌","Kaçan"],["📊","Lig"]],
+        profile:[["👤","Profil"],["🔌","API"],["📜","Gizlilik"],["ℹ️","Hk"]]
+      };
+      const vipIcon = state.isVip ? '💎' : '';
+      nav.innerHTML = (maps[state.page] || maps.market).map((x,i) => {
+        let icon = x[0];
+        if (i === 3 && vipIcon && x[1] === 'Profil') icon = '💎';
+        return `<button class="${i===0?'active':''}" data-action="${x[1].toLowerCase()}">${icon}<span>${x[1]}</span></button>`;
+      }).join("");
+    }
+
+    function syncTabFilter(tabId, filter){
+      const tab = document.getElementById(tabId);
+      if (!tab) return;
+      tab.querySelectorAll("button[data-filter]").forEach(b => b.classList.remove("active"));
+      const btn = tab.querySelector(`button[data-filter="${filter}"]`);
+      if (btn) btn.classList.add("active");
+    }
+
+    function handleNav(page, action){
+      // Sayfa değiştirme
+      const pageMap = { "profil":"profile", "trend":"market", "maç":"match", "tuzak":"trap", "haber":"news", "sonuç":"results", "hafta":"weekly" };
+      if (pageMap[action] && pageMap[action] !== page) { switchPage(pageMap[action]); return; }
+
+      // Profil alt işlemleri
+      if (page === "profile") {
+        if (action === "gizlilik") { openLegal(); return; }
+        if (action === "api") { /* API ayarlarına scroll */ showToast('API ayarları için yukarı kaydır'); return; }
+        return;
+      }
+
+      // Market filtresi
+      if (page === "market") {
+        if (action === "radar") { state.marketFilter = "all"; syncTabFilter("marketTabs","all"); renderMarket(); return; }
+        if (action === "trend") { state.marketFilter = "bull"; syncTabFilter("marketTabs","bull"); renderMarket(); return; }
+        if (action === "ai") { openAiTab(); return; }
+        if (action === "profil") { switchPage("profile"); return; }
+        return;
+      }
+
+      // Maç filtresi
+      if (page === "match") {
+        if (action === "maç") { state.matchFilter = "six"; syncTabFilter("matchTabs","six"); renderMatches(); return; }
+        if (action === "canlı") { state.matchFilter = "live"; syncTabFilter("matchTabs","live"); renderMatches(); return; }
+        if (action === "ai") { openAiTab(); return; }
+        if (action === "takip") { state.matchFilter = "watch"; syncTabFilter("matchTabs","watch"); renderMatches(); return; }
+        return;
+      }
+
+      // Tuzak filtresi
+      if (page === "trap") {
+        if (action === "tuzak") { state.trapFilter = "all"; syncTabFilter("trapTabs","all"); renderTrap(); return; }
+        if (action === "piyasa") { state.trapFilter = "market"; syncTabFilter("trapTabs","market"); renderTrap(); return; }
+        if (action === "maç") { state.trapFilter = "match"; syncTabFilter("trapTabs","match"); renderTrap(); return; }
+        if (action === "şart") { showToast('🧠 Koşullar yakında'); return; }
+        return;
+      }
+
+      // Haber filtresi
+      if (page === "news") {
+        if (action === "haber") { state.newsFilter = "all"; syncTabFilter("newsTabs","all"); renderNews(); return; }
+        if (action === "maç") { state.newsFilter = "football"; syncTabFilter("newsTabs","football"); renderNews(); return; }
+        if (action === "piyasa") { state.newsFilter = "market"; syncTabFilter("newsTabs","market"); renderNews(); return; }
+        if (action === "etki") { state.newsFilter = "impact"; syncTabFilter("newsTabs","impact"); renderNews(); return; }
+        return;
+      }
+
+      // Sonuç sayfası (sonuçları göster, weeklyFilter kullanma)
+      if (page === "results") {
+        if (action === "sonuç") { renderResults(); return; }
+        if (action === "rapor") { switchPage("weekly"); return; }
+        showToast('Sonuçlar sayfası');
+        return;
+      }
+      // Haftalık filtre
+      if (page === "weekly") {
+        if (action === "hafta") { state.weeklyFilter = "all"; syncTabFilter("weeklyTabs","all"); renderWeekly(); return; }
+        if (action === "tutan") { state.weeklyFilter = "hit"; syncTabFilter("weeklyTabs","hit"); renderWeekly(); return; }
+        if (action === "kaçan") { state.weeklyFilter = "miss"; syncTabFilter("weeklyTabs","miss"); renderWeekly(); return; }
+        if (action === "lig") { state.weeklyFilter = "league"; syncTabFilter("weeklyTabs","league"); renderWeekly(); return; }
+        return;
+      }
+    }
+
+    function openAiTab(){
+      showToast('🤖 AI sohbet için yukarıdaki AI sekmesine tıkla');
+    }
+
+    function unlocked(panel){
+      return state.unlocks[panel] && Date.now() < state.unlocks[panel];
+    }
+
+    const ADMOB_UNIT_ID = 'ca-app-pub-3940256099942544/5224354917'; // Test ID
+
+    function openAd(target){
+      // VIP kullanıcı reklam görmez, direkt erişim ver
+      if (state.isVip) {
+        state.unlocks[target || state.page] = Date.now() + 365 * 24 * 60 * 60 * 1000;
+        state.credits[target || state.page] += 5;
+        showToast('✅ VIP — Sınırsız erişim');
+        return;
+      }
+      state.adTarget = target || state.page;
+      const names = {market:"PiyasaAI", match:"MaçAI", news:"Haberler", results:"Sonuçlar", weekly:"Haftalık", trap:"Tuzak Radar"};
+      $("adTitle").textContent = names[state.adTarget] || "Panel";
+      $("adText").textContent = "Reklam tamamlanınca bu panel için 2 dakika detay erişimi ve 1 AI kredisi açılır. 💎 VIP ile sınırsız kullanım.";
+      els.ad.classList.add("show");
+      els.claim.disabled = true;
+      els.claim.textContent = "Reklam yükleniyor...";
+      els.adTimer.textContent = "⏳";
+      startAdWatch();
+    }
+
+    async function startAdWatch(){
+      const isNative = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+      if (isNative) {
+        try {
+          // Gerçek AdMob
+          const { RewardedAd } = await import('@capacitor-community/admob');
+          await RewardedAd.prepare({ adId: ADMOB_UNIT_ID });
+          const result = await RewardedAd.show();
+          if (result && result.adReward && result.adReward.amount > 0) {
+            els.adTimer.textContent = "✓";
+            els.claim.disabled = false;
+            els.claim.textContent = "Ödülü al";
+            return;
+          }
+        } catch (e) {
+          console.warn('AdMob failed, fallback to timer:', e);
+        }
+      }
+      // Web/fallback: 5 saniye timer
+      let s = 5;
+      els.adTimer.textContent = s;
+      clearInterval(state.timer);
+      state.timer = setInterval(() => {
+        s -= 1;
+        els.adTimer.textContent = s;
+        if(s <= 0){
+          clearInterval(state.timer);
+          els.adTimer.textContent = "✓";
+          els.claim.disabled = false;
+          els.claim.textContent = "Ödülü al";
+        }
+      }, 1000);
+    }
+
+    function closeAd(){
+      clearInterval(state.timer);
+      els.ad.classList.remove("show");
+      showToast("Reklam kapatıldı");
+    }
+
+    function claimReward(){
+      // Ücretsiz: 2 dk erişim, 1 kredi
+      state.unlocks[state.adTarget] = Date.now() + 2 * 60 * 1000;
+      state.credits[state.adTarget] += 1;
+      els.ad.classList.remove("show");
+      showToast("✅ " + state.adTarget + " paneli 5 dk açıldı");
+      renderAll();
+      updateMinutes();
+      if(state.selected) setTimeout(() => openDetail(state.selectedType, state.selected), 200);
+    }
+
+    function getMarketList(){
+      if(state.marketFilter === "all") return marketData;
+      if(state.marketFilter === "watch") return marketData.filter(x => state.marketWatch.has(x.id));
+      return marketData.filter(x => x.kinds.includes(state.marketFilter));
+    }
+
+    function renderMarket(){
+      const list = getMarketList();
+      const isOpen = unlocked("market");
+      els.marketCards.innerHTML = list.map(item => marketCard(item, isOpen)).join("");
+      $("bullCount").textContent = marketData.filter(x => x.upProb >= 60 && x.risk !== "Yüksek").length;
+      $("bearCount").textContent = marketData.filter(x => x.downProb > x.upProb || x.risk === "Yüksek").length;
+      $("avgAlpha").textContent = Math.round(marketData.reduce((a,b) => a + b.alpha, 0) / marketData.length);
+      $("marketCredits").textContent = state.credits.market;
+      $("candidateCount").textContent = list.length;
+      const c = marketCopy[state.marketFilter] || marketCopy.all;
+      $("marketListTitle").textContent = c[0];
+      $("marketListDesc").textContent = c[1];
+    }
+
+    function marketCard(item, isOpen){
+      const lockedClass = isOpen ? "" : "locked";
+      const alphaClass = item.risk === "Yüksek" ? "bad" : item.alpha >= 70 ? "hot" : "warn";
+      const barClass = item.downProb > item.upProb ? "red" : "";
+      return `
+        <article class="card ${lockedClass}">
+          <div class="secret">
+            <div class="cardtop">
+              <div class="asset">
+                <div class="icon">${item.symbol.slice(0,4)}</div>
+                <div class="name"><strong>${item.name}</strong><span>${item.symbol} • ${item.market}</span></div>
+              </div>
+              <div class="alpha ${alphaClass}">α ${item.alpha}/100</div>
+            </div>
+            <div class="headline"><h3>${item.signal}</h3><p>${item.summary}</p></div>
+            <div class="prob two">
+              <div class="probbox"><span>Yükseliş ihtimali</span><strong class="up">%${item.upProb}</strong></div>
+              <div class="probbox"><span>Düşüş riski</span><strong class="down">%${item.downProb}</strong></div>
+            </div>
+            <div class="bar ${barClass}" style="--w:${item.upProb}%"><i></i></div>
+            <div class="meta">
+              <span>Fiyat: ${item.price}</span><span>Güven: ${item.confidence}</span><span>Risk: ${item.risk}</span><span>Geçerlilik: ${item.valid}</span>
+              ${item.tags.map(t => `<span>${t}</span>`).join("")}
+            </div>
+            <p class="reason">AI ön gerekçe: ${item.reasons[0]}</p>
+            <div class="detail-list">${item.reasons.slice(1,3).map(r => `<div>• ${r}</div>`).join("")}</div>
+            <div class="card-actions">
+              <button class="mini-primary" onclick="openDetail('market','${item.id}')">Gerekçeyi aç</button>
+              <button class="mini-ghost" onclick="toggleMarketWatch('${item.id}')">${state.marketWatch.has(item.id) ? "Takipte" : "Takibe al"}</button>
+            </div>
+          </div>
+          ${isOpen ? "" : `<div class="lock"><button onclick="openAd('market')">🔒 Alpha sebebi ve detay için reklam izle</button></div>`}
+        </article>
+      `;
+    }
+
+    function getMatchList(){
+      return matchData.filter(m => m.filter.includes(state.matchFilter));
+    }
+
+    function renderMatches(){
+      const list = getMatchList();
+      const isOpen = unlocked("match");
+      els.matchCards.innerHTML = list.map(m => matchCard(m, isOpen)).join("");
+      $("strongMatchCount").textContent = matchData.filter(m => m.confidence >= 70).length;
+      $("liveMatchCount").textContent = matchData.filter(m => m.filter.includes("live")).length;
+      $("avgConfidence").textContent = Math.round(matchData.reduce((a,b) => a + b.confidence, 0) / matchData.length);
+      $("matchCredits").textContent = state.credits.match;
+      $("visibleMatches").textContent = list.length;
+      const c = matchCopy[state.matchFilter] || matchCopy.six;
+      $("matchListTitle").textContent = c[0];
+      $("matchListDesc").textContent = c[1];
+    }
+
+    function matchCard(m, isOpen){
+      const lockedClass = isOpen ? "" : "locked";
+      const alphaClass = m.confidence >= 70 ? "hot" : m.risk === "Yüksek" ? "bad" : "warn";
+      return `
+        <article class="card ${lockedClass}">
+          <div class="secret">
+            <div class="cardtop">
+              <div class="asset">
+                <div class="icon">⚽</div>
+                <div class="name"><strong>${m.home} - ${m.away}</strong><span>${m.league} • ${m.time} • ${m.score}</span></div>
+              </div>
+              <div class="alpha ${alphaClass}">Güven ${m.confidence}</div>
+            </div>
+            <div class="headline"><h3>${m.result}</h3><p>${m.market} • Tahmini skor: ${m.scorePred}</p></div>
+            <div class="prob">
+              <div class="probbox"><span>Ev</span><strong class="up">%${m.homeProb}</strong></div>
+              <div class="probbox"><span>Beraberlik</span><strong class="yellow">%${m.drawProb}</strong></div>
+              <div class="probbox"><span>Dep.</span><strong class="blue">%${m.awayProb}</strong></div>
+            </div>
+            <div class="bar" style="--w:${m.confidence}%"><i></i></div>
+            <div class="meta">
+              <span>MS: ${m.ms}</span><span>Gol: ${m.goals}</span><span>${m.kg}</span><span>Risk: ${m.risk}</span>
+              ${m.tags.map(t => `<span>${t}</span>`).join("")}
+            </div>
+            <p class="reason">AI ön gerekçe: ${m.reasons[0]}</p>
+            <div class="detail-list">${m.reasons.slice(1,3).map(r => `<div>• ${r}</div>`).join("")}</div>
+            <div class="card-actions">
+              <button class="mini-primary" onclick="openDetail('match','${m.id}')">Analizi aç</button>
+              <button class="mini-ghost" onclick="toggleMatchWatch('${m.id}')">${state.matchWatch.has(m.id) ? "Takipte" : "Takibe al"}</button>
+            </div>
+          </div>
+          ${isOpen ? "" : `<div class="lock"><button onclick="openAd('match')">🔒 AI analiz ve istatistik için reklam izle</button></div>`}
+        </article>
+      `;
+    }
+
+    function renderNews(){
+      const list = newsData.filter(n => n.type.includes(state.newsFilter));
+      const isOpen = unlocked("news");
+      els.newsList.innerHTML = list.map(n => `
+        <article class="news-card ${isOpen ? "" : "locked"}">
+          <div class="news-icon">${n.icon}</div>
+          <div class="secret">
+            <h3>${n.title}</h3>
+            <p>${n.summary}</p>
+            <div class="meta">
+              ${n.tags.map(t => `<span>${t}</span>`).join("")}
+              <span>Etki: ${n.impact}</span>
+            </div>
+            <div class="card-actions">
+              <button class="mini-primary" onclick="openDetail('news','${n.id}')">Etki analizini aç</button>
+              <button class="mini-ghost">Kaydet</button>
+            </div>
+          </div>
+          ${isOpen ? "" : `<div class="lock"><button onclick="openAd('news')">🔒 Haber etki analizi için reklam izle</button></div>`}
+        </article>
+      `).join("");
+      const titles = {
+        all:["Tüm Haberler","Haberler analiz etkisine göre öne çıkarılır."],
+        football:["Maç Haberleri","Maç sonucuna ve tahmine etki eden haberler."],
+        market:["Piyasa Haberleri","Alpha skorunu etkileyen piyasa gelişmeleri."],
+        injury:["Sakatlık/Kadro","İlk 11, sakatlık ve kadro etkileri."],
+        impact:["AI Etki","Haberin tahmine/skora etkisi."]
+      };
+      $("newsTitle").textContent = titles[state.newsFilter][0];
+      $("newsDesc").textContent = titles[state.newsFilter][1];
+    }
+
+    function renderResults(){
+      const isOpen = unlocked("results");
+      els.resultsList.innerHTML = resultsData.map(r => `
+        <article class="card ${isOpen ? "" : "locked"}">
+          <div class="secret">
+            <div class="cardtop">
+              <div class="asset">
+                <div class="icon">🏁</div>
+                <div class="name"><strong>${r.home} - ${r.away}</strong><span>${r.league} • Maç sonucu</span></div>
+              </div>
+              <div class="alpha ${r.status.includes("tuttu") ? "hot" : "warn"}">${r.status}</div>
+            </div>
+            <div class="scoreline"><span>Final skor</span><strong>${r.final}</strong></div>
+            <div class="headline"><h3>${r.prediction}</h3><p>Maç öncesi analiz güveni: ${r.confidence}</p></div>
+            <div class="meta">${r.tags.map(t => `<span>${t}</span>`).join("")}</div>
+            <p class="reason">AI sonuç özeti: ${r.reasons[0]}</p>
+            <div class="detail-list">${r.reasons.slice(1).map(x => `<div>• ${x}</div>`).join("")}</div>
+            <div class="card-actions">
+              <button class="mini-primary" onclick="openDetail('result','${r.id}')">Raporu aç</button>
+              <button class="mini-ghost">Arşivle</button>
+            </div>
+          </div>
+          ${isOpen ? "" : `<div class="lock"><button onclick="openAd('results')">🔒 Maç sonrası rapor için reklam izle</button></div>`}
+        </article>
+      `).join("");
+    }
+
+
+
+    function getTrapList(){
+      if(state.trapFilter === "all") return trapData;
+      return trapData.filter(item => item.type.includes(state.trapFilter));
+    }
+
+    function renderTrap(){
+      const list = getTrapList();
+      const isOpen = unlocked("trap");
+      $("trapCount").textContent = trapData.length;
+      $("trapHigh").textContent = trapData.filter(x => x.trap >= 65).length;
+      $("quietBull").textContent = trapData.filter(x => x.type.includes("quiet")).length;
+      $("avgTrap").textContent = Math.round(trapData.reduce((a,b) => a + b.trap, 0) / trapData.length);
+      $("trapCredits").textContent = state.credits.trap;
+      $("trapVisible").textContent = list.length;
+      const c = trapCopy[state.trapFilter] || trapCopy.all;
+      $("trapTitle").textContent = c[0];
+      $("trapDesc").textContent = c[1];
+
+      $("trapCards").innerHTML = list.map(item => `
+        <article class="card ${isOpen ? "" : "locked"}">
+          <div class="secret">
+            <div class="cardtop">
+              <div class="asset">
+                <div class="icon">${item.kind === "match" ? "⚽" : "α"}</div>
+                <div class="name"><strong>${item.title}</strong><span>${item.kind === "match" ? "Maç Tuzağı" : "Piyasa Tuzağı"} • ${item.subtitle}</span></div>
+              </div>
+              <div class="alpha ${item.trap >= 65 ? "bad" : item.trap <= 25 ? "hot" : "warn"}">Tuzak %${item.trap}</div>
+            </div>
+
+            <div class="headline">
+              <h3>${item.label}</h3>
+              <p>${item.result}</p>
+            </div>
+
+            <div class="trap-matrix">
+              <div class="trap-box"><span>Kalabalık skoru</span><strong class="yellow">%${item.crowd}</strong></div>
+              <div class="trap-box"><span>Veri skoru</span><strong class="up">%${item.data}</strong></div>
+              <div class="trap-box"><span>Tuzak riski</span><strong class="${item.trap >= 65 ? "down" : "blue"}">%${item.trap}</strong></div>
+              <div class="trap-box"><span>Net skor</span><strong>α ${item.score}</strong></div>
+            </div>
+
+            <div class="crowd-data">
+              <article><span>Kalabalık ne görüyor?</span><p>${item.crowdView}</p></article>
+              <article><span>Veri ne söylüyor?</span><p>${item.dataView}</p></article>
+            </div>
+
+            <div class="meta">
+              <span>Risk: ${item.risk}</span>
+              ${item.tags.map(t => `<span>${t}</span>`).join("")}
+            </div>
+
+            <div class="condition">
+              ${item.ifThen.map(x => `<div><b>Eğer / O zaman:</b> ${x}</div>`).join("")}
+            </div>
+
+            <div class="card-actions">
+              <button class="mini-primary" onclick="openDetail('trap','${item.id}')">Tuzak sebebini aç</button>
+              <button class="mini-ghost">Alarm kur</button>
+            </div>
+          </div>
+          ${isOpen ? "" : `<div class="lock"><button onclick="openAd('trap')">🔒 Tuzak gerekçesi ve şartlar için reklam izle</button></div>`}
+        </article>
+      `).join("");
+    }
+
+    function renderWeekly(){
+      const isOpen = unlocked("weekly");
+      const list = weeklyData.filter(item => item.type.includes(state.weeklyFilter));
+      $("weeklyTotal").textContent = weeklyData.length;
+      $("weeklyHit").textContent = weeklyData.filter(x => x.status === "Tuttu" || x.status === "Kısmi").length;
+      $("weeklyRate").textContent = "%75";
+      $("weeklyCredits").textContent = state.credits.weekly;
+      const c = weeklyCopy[state.weeklyFilter] || weeklyCopy.all;
+      $("weeklyTitle").textContent = c[0];
+      $("weeklyDesc").textContent = c[1];
+
+      $("weeklyList").innerHTML = list.map(r => `
+        <article class="card ${isOpen ? "" : "locked"}">
+          <div class="secret">
+            <div class="cardtop">
+              <div class="asset">
+                <div class="icon">📅</div>
+                <div class="name"><strong>${r.home} - ${r.away}</strong><span>${r.day} • ${r.league}</span></div>
+              </div>
+              <div class="alpha ${r.status === "Tuttu" ? "hot" : r.status === "Kaçtı" ? "bad" : "warn"}">${r.status}</div>
+            </div>
+            <div class="scoreline"><span>Final skor</span><strong>${r.final}</strong></div>
+            <div class="headline"><h3>${r.prediction}</h3><p>Maç önü güven skoru: ${r.confidence}</p></div>
+            <div class="meta">${r.tags.map(t => `<span>${t}</span>`).join("")}</div>
+            <p class="reason">Haftalık rapor notu: ${r.reasons[0]}</p>
+            <div class="detail-list">${r.reasons.slice(1).map(x => `<div>• ${x}</div>`).join("")}</div>
+            <div class="card-actions">
+              <button class="mini-primary" onclick="openDetail('weekly','${r.id}')">Haftalık raporu aç</button>
+              <button class="mini-ghost">Arşivle</button>
+            </div>
+          </div>
+          ${isOpen ? "" : `<div class="lock"><button onclick="openAd('weekly')">🔒 Haftalık detay raporu için reklam izle</button></div>`}
+        </article>
+      `).join("");
+    }
+
+    function renderAll(){
+      renderMarket();
+      renderMatches();
+      renderTrap();
+      renderNews();
+      renderResults();
+      renderWeekly();
+      updateMinutes();
+      renderBottom();
+    }
+
+    function openDetail(type, id){
+      const panelMap = {market:"market", match:"match", trap:"trap", news:"news", result:"results", weekly:"weekly"};
+      const panel = panelMap[type];
+      if(!unlocked(panel)){
+        state.selected = id;
+        state.selectedType = type;
+        openAd(panel);
+        return;
+      }
+
+      state.selected = id;
+      state.selectedType = type;
+
+      let item, title, text, bullets;
+      if(type === "market"){
+        item = marketData.find(x => x.id === id);
+        title = `${item.symbol} • ${item.signal}`;
+        text = `${item.summary} Kaynak: ${item.source}. Bu içerik yatırım tavsiyesi değildir.`;
+        bullets = item.reasons;
+      }else if(type === "match"){
+        item = matchData.find(x => x.id === id);
+        title = `${item.home} - ${item.away}`;
+        text = `Tahmin: ${item.result}. Gol: ${item.goals}. KG: ${item.kg}. Kaynak: ${item.source}. Kesin sonuç değildir.`;
+        bullets = item.reasons;
+      }else if(type === "trap"){
+        item = trapData.find(x => x.id === id);
+        title = `${item.title} • ${item.subtitle}`;
+        text = `${item.result} Bu içerik kesin sonuç veya yatırım tavsiyesi değildir.`;
+        bullets = [item.crowdView, item.dataView].concat(item.ifThen);
+      }else if(type === "news"){
+        item = newsData.find(x => x.id === id);
+        title = item.title;
+        text = `${item.summary} AI etki etiketi: ${item.impact}.`;
+        bullets = ["Haber tahmin skorunu etkileyebilir.", "Kadro/istatistik verisiyle birlikte değerlendirilmelidir.", "Tek başına kesin sinyal değildir."];
+      }else if(type === "result"){
+        item = resultsData.find(x => x.id === id);
+        title = `${item.home} - ${item.away} • ${item.final}`;
+        text = `Tahmin: ${item.prediction}. Durum: ${item.status}.`;
+        bullets = item.reasons;
+      }else{
+        item = weeklyData.find(x => x.id === id);
+        title = `${item.home} - ${item.away} • ${item.final}`;
+        text = `Haftalık durum: ${item.status}. Tahmin: ${item.prediction}. Bu rapor model performansını şeffaf göstermek için tutulur.`;
+        bullets = item.reasons;
+      }
+
+      $("detailTitle").textContent = title;
+      $("detailText").textContent = text;
+      $("detailBullets").innerHTML = bullets.map(b => `<div>• ${b}</div>`).join("");
+      els.detail.classList.add("show");
+    }
+
+    function closeDetail(){ els.detail.classList.remove("show"); }
+
+    function favoriteSelected(){
+      if(state.selectedType === "market") state.marketWatch.add(state.selected);
+      if(state.selectedType === "match") state.matchWatch.add(state.selected);
+      closeDetail();
+      renderAll();
+      showToast("Takibe alındı");
+    }
+
+    function toggleMarketWatch(id){
+      if(state.marketWatch.has(id)){
+        state.marketWatch.delete(id);
+        showToast("Piyasa adayı takipten çıkarıldı");
+      }else{
+        state.marketWatch.add(id);
+        showToast("Piyasa adayı takibe alındı");
+      }
+      renderMarket();
+    }
+
+    function toggleMatchWatch(id){
+      if(state.matchWatch.has(id)){
+        state.matchWatch.delete(id);
+        showToast("Maç takipten çıkarıldı");
+      }else{
+        state.matchWatch.add(id);
+        showToast("Maç takibe alındı");
+      }
+      renderMatches();
+    }
+
+    function openLegal(){ els.legal.classList.add("show"); }
+    function closeLegal(){ els.legal.classList.remove("show"); }
+    function acceptLegal(){ closeLegal(); showToast("Yasal uyarı kabul edildi"); }
+
+    function toggleApiMode(){
+      const current = localStorage.getItem('use_api') === 'true';
+      if (current) {
+        localStorage.setItem('use_api', 'false');
+        showToast('🔌 Demo moda geçildi');
+      } else {
+        localStorage.setItem('use_api', 'true');
+        showToast('🔌 API moduna geçildi');
+      }
+      setTimeout(() => location.reload(), 500);
+    }
+
+    function renderProfile(){
+      $("profileCredits").textContent = state.credits.market + state.credits.match + state.credits.trap + state.credits.news + state.credits.results + state.credits.weekly;
+      $("pCredits").textContent = state.credits.market + ' kredi';
+      $("mCredits").textContent = state.credits.match + ' kredi';
+      $("tCredits").textContent = state.credits.trap + ' kredi';
+      $("oCredits").textContent = (state.credits.news + state.credits.results + state.credits.weekly) + ' kredi';
+    }
+
+    function updateMinutes(){
+      ["market","match","trap","news","results","weekly"].forEach(panel => {
+        const el = $(panel + "Minutes");
+        if(!el) return;
+        const value = unlocked(panel) ? Math.max(0, Math.ceil((state.unlocks[panel] - Date.now()) / 60000)) : 0;
+        el.textContent = value;
+      });
+    }
+
+    function showToast(msg){
+      els.toast.textContent = msg;
+      els.toast.classList.add("show");
+      setTimeout(() => els.toast.classList.remove("show"), 2300);
+    }
+
+    setInterval(() => {
+      updateMinutes();
+      if(!unlocked("market")) renderMarket();
+      if(!unlocked("match")) renderMatches();
+      if(!unlocked("trap")) renderTrap();
+      if(!unlocked("news")) renderNews();
+      if(!unlocked("results")) renderResults();
+      if(!unlocked("weekly")) renderWeekly();
+    }, 15000);
+
+    async function loadApiData() {
+      if (!USE_API) { hideLoading(); return; }
+      try {
+        const [market, matches, traps, news, results] = await Promise.all([
+          apiGet('/market/alpha'),
+          apiGet('/matches/daily-six'),
+          apiGet('/trap/all'),
+          apiGet('/news/impact'),
+          apiGet('/results/daily'),
+        ]);
+        if (market && market.length) { marketData.length = 0; marketData.push(...market); }
+        if (matches && matches.length) { matchData.length = 0; matchData.push(...matches); }
+        if (traps && traps.length) { trapData.length = 0; trapData.push(...traps); }
+        if (news && news.length) { newsData.length = 0; newsData.push(...news); }
+        if (results && results.length) { resultsData.length = 0; resultsData.push(...results); }
+      } catch (e) { console.error('API load error:', e); }
+      renderAll();
+      hideLoading();
+    }
+
+    function hideLoading() {
+      const el = document.getElementById('loadingScreen');
+      if (el) { el.style.opacity = '0'; el.style.transition = '.4s'; setTimeout(() => el.remove(), 500); }
+    }
+
+    try {
+      if (USE_API) {
+        loadApiData();
+      } else {
+        renderAll();
+        hideLoading();
+      }
+      setTimeout(() => { switchPage("market"); ageGateCheck(); }, 100);
+    } catch (e) {
+      console.error('App error:', e);
+      hideLoading();
+      setTimeout(() => { switchPage("market"); ageGateCheck(); }, 100);
+    }
+  </script>
+</body>
+</html>

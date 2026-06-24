@@ -1,0 +1,29 @@
+{
+  "name": "piyasaai-macai-tuzakradar",
+  "version": "8.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node server.js",
+    "build": "tsc && node scripts/copy-assets.js",
+    "build:web": "tsc && node scripts/copy-assets.js",
+    "cap:add:android": "npx cap add android",
+    "cap:add:ios": "npx cap add ios",
+    "cap:sync": "npx cap sync",
+    "cap:open:android": "npx cap open android",
+    "cap:open:ios": "npx cap open ios",
+    "cap:build:android": "npm run build && npx cap sync && npx cap copy && cd android && ./gradlew assembleDebug",
+    "cap:build:release": "npm run build && npx cap sync && npx cap copy"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.1.0",
+    "@capacitor/splash-screen": "^6.0.0",
+    "@capacitor-community/admob": "^6.1.0"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^6.1.0",
+    "@capacitor/cli": "^6.1.0",
+    "@capacitor/ios": "^6.1.0",
+    "@types/node": "^26.0.0",
+    "typescript": "^5.6.0"
+  }
+}

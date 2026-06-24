@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PiyasaAI Admin</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:system-ui,-apple-system,sans-serif;background:#03070b;color:#f3fbff;min-height:100vh;display:flex;align-items:center;justify-content:center}
+    .login-box{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:40px;width:340px;text-align:center}
+    .login-box h1{color:#23d18b;font-size:22px;margin-bottom:6px}
+    .login-box p{color:#8eabba;font-size:13px;margin-bottom:24px}
+    input{width:100%;padding:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;color:#f3fbff;font-size:14px;margin-bottom:12px;outline:none}
+    input:focus{border-color:#23d18b}
+    button{width:100%;padding:12px;background:#23d18b;color:#03070b;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer}
+    button:hover{opacity:.9}
+    .error{color:#ff5d7a;font-size:13px;margin-top:8px}
+    .app{display:none;width:100%;max-width:1000px;padding:20px}
+    .app.show{display:block}
+    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+    .header h1{color:#23d18b;font-size:20px}
+    .header span{color:#8eabba;font-size:13px}
+    .header button{width:auto;padding:8px 16px;background:transparent;border:1px solid rgba(255,255,255,.2);color:#f3fbff}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+    .stat-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px;text-align:center}
+    .stat-card strong{display:block;font-size:28px;color:#23d18b}
+    .stat-card small{color:#8eabba;font-size:12px}
+    .section{margin-bottom:24px}
+    .section h2{font-size:15px;color:#8eabba;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th{text-align:left;color:#8eabba;font-weight:400;padding:8px 6px;border-bottom:1px solid rgba(255,255,255,.08)}
+    td{padding:8px 6px;border-bottom:1px solid rgba(255,255,255,.04)}
+    .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px}
+    .badge.active{background:rgba(35,209,139,.2);color:#23d18b}
+    .badge.cancelled{background:rgba(255,93,122,.2);color:#ff5d7a}
+    .add-vip{padding:12px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.15);border-radius:12px;text-align:center;cursor:pointer;font-size:13px;color:#8eabba}
+    .add-vip:hover{border-color:#23d18b;color:#23d18b}
+    .add-form{display:none;padding:16px;background:rgba(255,255,255,.04);border-radius:12px;margin-top:12px}
+    .add-form.show{display:block}
+    .add-form input{width:calc(50% - 6px);display:inline-block}
+    .add-form input:first-child{margin-right:12px}
+    .add-form button{width:auto;padding:10px 24px;margin-top:8px}
+    .price-box{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px}
+    .price-box strong{font-size:24px;color:#23d18b;min-width:80px}
+    .price-box input{width:120px;margin:0}
+    .price-box button{width:auto;padding:10px 20px}
+  </style>
+</head>
+<body>
+  <div class="login-box" id="loginBox">
+    <h1>🔐 PiyasaAI Admin</h1>
+    <p>Lila101 Okey Yönetim Paneli</p>
+    <input type="text" id="username" placeholder="Kullanıcı adı" />
+    <input type="password" id="password" placeholder="Şifre" onkeydown="if(event.key==='Enter')login()" />
+    <button onclick="login()">Giriş</button>
+    <div class="error" id="loginError"></div>
+  </div>
+
+  <div class="app" id="app">
+    <div class="header">
+      <div><h1>📊 PiyasaAI Admin</h1><span id="userInfo"></span></div>
+      <button onclick="logout()">Çıkış</button>
+    </div>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="section">
+      <h2>💲 Fiyat Yönetimi</h2>
+      <div class="price-box">
+        <strong id="currentPriceLabel">₺800</strong>
+        <input type="number" id="newPrice" placeholder="Yeni fiyat" min="100" />
+        <button onclick="updatePrice()">Güncelle</button>
+        <span id="priceMsg" style="color:#23d18b;font-size:13px"></span>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>💎 VIP Üyeler</h2>
+      <table id="vipTable">
+        <thead><tr><th>Cihaz</th><th>E-posta</th><th>Başlangıç</th><th>Bitiş</th><th>Durum</th><th>Ödeme</th><th>İşlem</th></tr></thead>
+        <tbody id="vipBody"></tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2>➕ Yeni VIP Ekle</h2>
+      <div class="add-vip" onclick="document.getElementById('addForm').classList.toggle('show')">+ Manuel VIP ekle</div>
+      <div class="add-form" id="addForm">
+        <input type="text" id="newDeviceId" placeholder="Device ID" />
+        <input type="number" id="newMonths" placeholder="Ay (1-12)" value="1" min="1" max="12" />
+        <button onclick="addVip()">VIP Ekle</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>💰 Son Ödemeler</h2>
+      <table>
+        <thead><tr><th>Cihaz</th><th>Tutar</th><th>Yöntem</th><th>Tarih</th><th>Durum</th></tr></thead>
+        <tbody id="paymentsBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const API = '';  // Aynı origin (admin panel backend'den serve ediliyor)
+    let token = sessionStorage.getItem('admin_token');
+
+    if (token) { showApp(); document.getElementById('userInfo').textContent = 'Yükleniyor...'; loadDashboard(); }
+
+    async function api(path, opts = {}) {
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      const res = await fetch(API + path, { ...opts, headers: { ...headers, ...opts.headers } });
+      if (res.status === 401) { sessionStorage.removeItem('admin_token'); token = null; showLogin(); }
+      return res.json();
+    }
+
+    function showLogin() {
+      document.getElementById('loginBox').style.display = 'block';
+      document.getElementById('app').classList.remove('show');
+    }
+
+    function showApp() {
+      document.getElementById('loginBox').style.display = 'none';
+      document.getElementById('app').classList.add('show');
+    }
+
+    async function login() {
+      const u = document.getElementById('username').value;
+      const p = document.getElementById('password').value;
+      const err = document.getElementById('loginError');
+      if (!u || !p) { err.textContent = 'Kullanıcı adı ve şifre girin'; return; }
+      err.textContent = '';
+      const res = await api('/admin/login', { method: 'POST', body: JSON.stringify({ username: u, password: p }) });
+      if (res.token) {
+        token = res.token;
+        sessionStorage.setItem('admin_token', token);
+        document.getElementById('userInfo').textContent = res.username + ' (' + res.role + ')';
+        loadDashboard();
+        showApp();
+      } else {
+        err.textContent = res.message || 'Giriş başarısız';
+      }
+    }
+
+    function logout() {
+      sessionStorage.removeItem('admin_token');
+      token = null;
+      showLogin();
+    }
+
+    async function loadPrice() {
+      const res = await api('/admin/price');
+      document.getElementById('currentPriceLabel').textContent = '₺' + (res.price || 800);
+    }
+
+    async function updatePrice() {
+      const price = parseInt(document.getElementById('newPrice').value);
+      if (!price || price < 100) { alert('Fiyat en az 100 olmalı'); return; }
+      const res = await api('/admin/update-price', { method: 'POST', body: JSON.stringify({ price }) });
+      document.getElementById('priceMsg').textContent = res.success ? '✅ Güncellendi: ₺' + res.price : '❌ Hata';
+      if (res.success) { document.getElementById('currentPriceLabel').textContent = '₺' + res.price; }
+      setTimeout(() => document.getElementById('priceMsg').textContent = '', 3000);
+    }
+
+    async function loadDashboard() {
+      const dash = await api('/admin/dashboard');
+      loadPrice();
+      document.getElementById('stats').innerHTML = `
+        <div class="stat-card"><strong>${dash.activeVips || 0}</strong><small>Aktif VIP</small></div>
+        <div class="stat-card"><strong>${dash.totalUsers || 0}</strong><small>Toplam Kullanıcı</small></div>
+        <div class="stat-card"><strong>₺${Number(dash.totalRevenue || 0).toLocaleString()}</strong><small>Toplam Gelir</small></div>
+      `;
+
+      const vipList = await api('/admin/vip-list');
+      document.getElementById('vipBody').innerHTML = (vipList || []).map(v => `
+        <tr>
+          <td>${v.deviceId || v.user?.deviceId || '-'}</td>
+          <td>${v.email || '-'}</td>
+          <td>${new Date(v.startDate).toLocaleDateString('tr-TR')}</td>
+          <td>${v.endDate ? new Date(v.endDate).toLocaleDateString('tr-TR') : '-'}</td>
+          <td><span class="badge ${v.status}">${v.status}</span></td>
+          <td>${v.paymentMethod || '-'}</td>
+          <td>${v.status === 'active' ? `<button style="width:auto;padding:4px 10px;background:#ff5d7a;color:white;border:none;border-radius:6px;font-size:11px;cursor:pointer" onclick="cancelVip('${v.id}')">İptal</button>` : ''}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="7" style="text-align:center;color:#8eabba">Henüz VIP yok</td></tr>';
+
+      if (dash.recentPayments) {
+        document.getElementById('paymentsBody').innerHTML = dash.recentPayments.map(p => `
+          <tr>
+            <td>${p.deviceId || '-'}</td>
+            <td>₺${Number(p.amount).toLocaleString()}</td>
+            <td>${p.provider}</td>
+            <td>${new Date(p.createdAt).toLocaleDateString('tr-TR')}</td>
+            <td><span class="badge ${p.status}">${p.status}</span></td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    async function addVip() {
+      const deviceId = document.getElementById('newDeviceId').value;
+      const months = parseInt(document.getElementById('newMonths').value) || 1;
+      if (!deviceId) { alert('Device ID girin'); return; }
+      const res = await api('/admin/add-vip', { method: 'POST', body: JSON.stringify({ deviceId, months }) });
+      if (res.success) { alert('VIP eklendi!'); loadDashboard(); document.getElementById('addForm').classList.remove('show'); }
+      else { alert('Hata: ' + (res.message || '?')); }
+    }
+
+    async function cancelVip(id) {
+      if (!confirm('VIP iptal edilsin mi?')) return;
+      await api('/admin/cancel-vip', { method: 'POST', body: JSON.stringify({ id }) });
+      loadDashboard();
+    }
+
+    if (token) { showApp(); document.getElementById('userInfo').textContent = 'Admin'; loadDashboard(); }
+  </script>
+</body>
+</html>
