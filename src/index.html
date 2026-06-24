@@ -1591,19 +1591,25 @@
       document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#03070b;color:#f3fbff;font-family:system-ui;text-align:center;padding:40px"><div><h1 style="font-size:48px;margin-bottom:12px">🔞</h1><h2>Üzgünüz</h2><p style="color:#8eabba;margin-top:8px">Bu uygulama 18 yaş altı kullanıcılar için uygun değildir.</p></div></div>';
     }
 
-    async function apiGet(path) {
+    async function apiGet(path, timeout=8000) {
       if (!USE_API) return null;
       try {
-        const res = await fetch(API_BASE + path);
+        const ctrl = new AbortController();
+        const id = setTimeout(() => ctrl.abort(), timeout);
+        const res = await fetch(API_BASE + path, { signal: ctrl.signal });
+        clearTimeout(id);
         if (!res.ok) return null;
         return await res.json();
       } catch { return null; }
     }
 
-    async function apiPost(path, body) {
+    async function apiPost(path, body, timeout=8000) {
       if (!USE_API) return null;
       try {
-        const res = await fetch(API_BASE + path, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+        const ctrl = new AbortController();
+        const id = setTimeout(() => ctrl.abort(), timeout);
+        const res = await fetch(API_BASE + path, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body), signal: ctrl.signal });
+        clearTimeout(id);
         if (!res.ok) return null;
         return await res.json();
       } catch { return null; }
@@ -1616,6 +1622,7 @@
     const matchCopy = {}
     const newsData = []
     const resultsData = []
+    const trapData = []
 
     const state = {
       page:"market",
@@ -2033,7 +2040,7 @@
       els.marketCards.innerHTML = list.map(item => marketCard(item, isOpen)).join("");
       $("bullCount").textContent = marketData.filter(x => x.upProb >= 60 && x.risk !== "Yüksek").length;
       $("bearCount").textContent = marketData.filter(x => x.downProb > x.upProb || x.risk === "Yüksek").length;
-      $("avgAlpha").textContent = Math.round(marketData.reduce((a,b) => a + b.alpha, 0) / marketData.length);
+      $("avgAlpha").textContent = marketData.length ? Math.round(marketData.reduce((a,b) => a + b.alpha, 0) / marketData.length) : "0";
       $("marketCredits").textContent = state.credits.market;
       $("candidateCount").textContent = list.length;
       const c = marketCopy[state.marketFilter] || marketCopy.all;
@@ -2087,7 +2094,7 @@
       els.matchCards.innerHTML = list.map(m => matchCard(m, isOpen)).join("");
       $("strongMatchCount").textContent = matchData.filter(m => m.confidence >= 70).length;
       $("liveMatchCount").textContent = matchData.filter(m => m.filter.includes("live")).length;
-      $("avgConfidence").textContent = Math.round(matchData.reduce((a,b) => a + b.confidence, 0) / matchData.length);
+      $("avgConfidence").textContent = matchData.length ? Math.round(matchData.reduce((a,b) => a + b.confidence, 0) / matchData.length) : "0";
       $("matchCredits").textContent = state.credits.match;
       $("visibleMatches").textContent = list.length;
       const c = matchCopy[state.matchFilter] || matchCopy.six;
@@ -2203,7 +2210,7 @@
       $("trapCount").textContent = trapData.length;
       $("trapHigh").textContent = trapData.filter(x => x.trap >= 65).length;
       $("quietBull").textContent = trapData.filter(x => x.type.includes("quiet")).length;
-      $("avgTrap").textContent = Math.round(trapData.reduce((a,b) => a + b.trap, 0) / trapData.length);
+      $("avgTrap").textContent = trapData.length ? Math.round(trapData.reduce((a,b) => a + b.trap, 0) / trapData.length) : "0";
       $("trapCredits").textContent = state.credits.trap;
       $("trapVisible").textContent = list.length;
       const c = trapCopy[state.trapFilter] || trapCopy.all;
