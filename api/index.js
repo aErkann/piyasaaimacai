@@ -31,6 +31,13 @@ function setConfig(data) {
 const ADMIN_USER = process.env.ADMIN_USER || 'admin';
 const ADMIN_PASS = process.env.ADMIN_PASS || 'admin123';
 
+// ===== VIP data store (JSON file fallback, no DB needed) =====
+const VIP_FILE = join(ROOT, 'backend', 'vips.json');
+function getVips() {
+  try { return JSON.parse(readFileSync(VIP_FILE, 'utf-8')); } catch { return []; }
+}
+function saveVips(data) { writeFileSync(VIP_FILE, JSON.stringify(data, null, 2), 'utf-8'); }
+
 // ===== Routes =====
 app.get('/api/vip/price', (req, res) => {
   try {
@@ -151,6 +158,85 @@ app.use('/admin', express.Router().get('*', (req, res) => {
     res.status(404).send('Admin panel sayfası bulunamadı');
   }
 }));
+
+// ===== Admin dashboard =====
+const requireAdmin = (req, res) => {
+  const auth = req.headers.authorization;
+  if (!auth || !auth.startsWith('Bearer admin-token-')) {
+    res.status(401).json({ success: false, error: 'Yetkisiz erişim' });
+    return false;
+  }
+  return true;
+};
+
+app.get('/api/admin/dashboard', (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  try {
+    const vips = getVips();
+    const active = vips.filter(v => v.status === 'active');
+    const totalRevenue = vips.reduce((sum, v) => sum + (v.amount || 0), 0);
+    const recentPayments = vips.slice(-10).reverse().map(v => ({
+      deviceId: v.deviceId, amount: v.amount || 0, provider: v.provider || 'Shopier',
+      createdAt: v.createdAt, status: v.status
+    }));
+    res.json({ success: true, activeVips: active.length, totalUsers: active.length + 10, totalRevenue, recentPayments });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.get('/api/admin/vip-list', (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  try {
+    res.json({ success: true, data: getVips() });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post('/api/admin/add-vip', (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  try {
+    const { deviceId, months } = req.body;
+    if (!deviceId) return res.status(400).json({ success: false, message: 'Device ID gerekli' });
+    const vips = getVips();
+    const cfg = getConfig();
+    const newVip = {
+      id: 'vip-' + Date.now(), deviceId, email: req.body.email || '',
+      startDate: new Date().toISOString(),
+      endDate: new Date(Date.now() + (months || 1) * 30 * 24 * 60 * 60 * 1000).toISOString(),
+      status: 'active', amount: (months || 1) * cfg.vipMonthlyPrice, provider: 'admin',
+      paymentMethod: 'admin', createdAt: new Date().toISOString()
+    };
+    vips.push(newVip);
+    saveVips(vips);
+    res.json({ success: true, vip: newVip });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+app.post('/api/admin/cancel-vip', (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  try {
+    const { id } = req.body;
+    const vips = getVips();
+    const idx = vips.findIndex(v => v.id === id);
+    if (idx === -1) return res.status(404).json({ success: false, message: 'VIP bulunamadı' });
+    vips[idx].status = 'cancelled';
+    saveVips(vips);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+// ===== VIP check (device based) =====
+app.get('/api/vip/check', (req, res) => {
+  try {
+    const deviceId = req.query.deviceId;
+    if (!deviceId) return res.json({ isVip: false });
+    const vips = getVips();
+    const active = vips.find(v => v.deviceId === deviceId && v.status === 'active' && new Date(v.endDate) > new Date());
+    if (active) {
+      res.json({ isVip: true, endDate: active.endDate });
+    } else {
+      res.json({ isVip: false });
+    }
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
 
 // ===== Health check =====
 app.get('/api/health', (req, res) => {
