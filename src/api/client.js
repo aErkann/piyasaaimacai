@@ -7,9 +7,10 @@
 // BACKEND API (kendi sunucumuz)
 // ============================================================
 // @ts-ignore - browser or Node
+const API_BASE = typeof location !== 'undefined' && location.hostname !== 'localhost' ? '/api' : 'http://localhost:3000/api';
 const BACKEND_URL = (typeof process !== 'undefined' && process.env?.API_DOMAIN) || 'http://localhost:3000';
 export async function backendRequest(config) {
-    const url = `${BACKEND_URL}${config.path}`;
+    const url = `${typeof location !== 'undefined' ? API_BASE : BACKEND_URL}${config.path}`;
     try {
         const res = await fetch(url, {
             method: config.method,

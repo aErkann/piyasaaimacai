@@ -1574,7 +1574,7 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    const API_BASE = localStorage.getItem('api_base') || 'http://localhost:3000';
+    const API_BASE = localStorage.getItem('api_base') || (location.hostname !== 'localhost' ? '/api' : 'http://localhost:3000');
     const USE_API = localStorage.getItem('use_api') === 'true';
 
     function ageGateCheck(){

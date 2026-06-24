@@ -1,0 +1,161 @@
+// Vercel Serverless API — Express üzerinde backend route'ları
+const express = require('express');
+const { readFileSync, writeFileSync, existsSync } = require('fs');
+const { join } = require('path');
+
+const app = express();
+app.use(express.json());
+
+// CORS
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  next();
+});
+
+const ROOT = join(__dirname, '..');
+
+// ===== Config helpers =====
+function getConfig() {
+  const p = join(ROOT, 'backend', 'config.json');
+  return JSON.parse(readFileSync(p, 'utf-8'));
+}
+function setConfig(data) {
+  const p = join(ROOT, 'backend', 'config.json');
+  writeFileSync(p, JSON.stringify(data, null, 2), 'utf-8');
+}
+
+// ===== Admin auth =====
+const ADMIN_USER = process.env.ADMIN_USER || 'admin';
+const ADMIN_PASS = process.env.ADMIN_PASS || 'admin123';
+
+// ===== Routes =====
+app.get('/api/vip/price', (req, res) => {
+  try {
+    const cfg = getConfig();
+    res.json({ success: true, price: cfg.vipMonthlyPrice, currency: 'TRY', email: cfg.shopierEmail });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+app.post('/api/admin/login', (req, res) => {
+  const { username, password } = req.body || {};
+  if (username === ADMIN_USER && password === ADMIN_PASS) {
+    res.json({ success: true, token: 'admin-token-' + Date.now() });
+  } else {
+    res.status(401).json({ success: false, error: 'Geçersiz kullanıcı adı veya şifre' });
+  }
+});
+
+app.post('/api/admin/update-price', (req, res) => {
+  const auth = req.headers.authorization;
+  if (!auth || !auth.startsWith('Bearer admin-token-')) {
+    return res.status(401).json({ success: false, error: 'Yetkisiz erişim' });
+  }
+  try {
+    const { price } = req.body;
+    if (!price || price < 1) {
+      return res.status(400).json({ success: false, error: 'Geçersiz fiyat' });
+    }
+    const cfg = getConfig();
+    cfg.vipMonthlyPrice = price;
+    setConfig(cfg);
+    res.json({ success: true, price });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+app.get('/api/admin/price', (req, res) => {
+  try {
+    const cfg = getConfig();
+    res.json({ success: true, price: cfg.vipMonthlyPrice });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// ===== Shopier ödeme oluşturma =====
+app.post('/api/vip/create-payment', async (req, res) => {
+  try {
+    const cfg = getConfig();
+    const pat = process.env.SHOPIER_PAT;
+    if (!pat) {
+      return res.status(500).json({ success: false, error: 'Shopier PAT tanımlı değil' });
+    }
+
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : 'http://localhost:3000';
+    const { buyer_name, buyer_email, buyer_phone } = req.body || {};
+
+    const productPayload = {
+      product_name: 'PiyasaAI VIP Üyelik (1 Ay)',
+      product_price: cfg.vipMonthlyPrice,
+      product_currency: 'TRY',
+      buyer_name: buyer_name || 'VIP Kullanıcı',
+      buyer_email: buyer_email || 'vip@kullanici.com',
+      buyer_phone: buyer_phone || '5550000000',
+      callback_url: `${baseUrl}/api/vip/shopier-webhook`,
+      extra: JSON.stringify({ plan: 'monthly', timestamp: Date.now() }),
+    };
+
+    const resp = await fetch('https://www.shopier.com/api/v1/product', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${pat}`,
+      },
+      body: JSON.stringify(productPayload),
+    });
+
+    const data = await resp.json();
+    if (resp.ok && data.payment_url) {
+      res.json({ success: true, payment_url: data.payment_url });
+    } else {
+      res.status(400).json({ success: false, error: data.message || 'Shopier hatası', detail: data });
+    }
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// ===== Shopier webhook =====
+app.post('/api/vip/shopier-webhook', (req, res) => {
+  // Webhook'tan gelen veriyi logla
+  console.log('Shopier webhook received:', JSON.stringify(req.body));
+  // TODO: İmza doğrulama + VIP aktivasyon
+  res.status(200).json({ success: true, message: 'Webhook alındı' });
+});
+
+// ===== Admin statik dosyaları serve et =====
+app.use('/admin', express.Router().get('*', (req, res) => {
+  const filePath = join(ROOT, 'admin', req.path === '/admin' || req.path === '/admin/' ? 'index.html' : req.path.replace('/admin/', ''));
+  if (existsSync(filePath)) {
+    const ext = filePath.split('.').pop();
+    const mime = {
+      html: 'text/html; charset=utf-8',
+      css: 'text/css',
+      js: 'application/javascript',
+      json: 'application/json',
+      png: 'image/png',
+      svg: 'image/svg+xml',
+      ico: 'image/x-icon',
+    };
+    res.type(mime[ext] || 'text/plain');
+    res.send(readFileSync(filePath));
+  } else {
+    res.status(404).send('Admin panel sayfası bulunamadı');
+  }
+}));
+
+// ===== Health check =====
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', time: new Date().toISOString() });
+});
+
+// ===== Vercel export =====
+module.exports = app;
