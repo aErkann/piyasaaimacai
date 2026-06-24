@@ -118,6 +118,7 @@ app.get('/api/test-shopier', async (req, res) => {
       currency: 'TRY',
       stockQuantity: 1,
       orderId: 'test-' + Date.now(),
+      imageUrl: 'https://lila101okey.win/favicon.ico',
     });
     res.json({ success: true, paymentUrl: result.paymentUrl });
   } catch (e) {
@@ -160,6 +161,7 @@ app.post('/api/vip/create-payment', async (req, res) => {
         currency: productPayload.product_currency,
         stockQuantity: 999,
         orderId: 'vip-' + Date.now(),
+        imageUrl: 'https://lila101okey.win/favicon.ico',
       });
       if (result.paymentUrl) {
         res.json({ success: true, payment_url: result.paymentUrl });
