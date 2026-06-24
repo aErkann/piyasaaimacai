@@ -1,19 +1,14 @@
 // ============================================================
 // AdMob Rewarded Video + Banner Entegrasyonu
 // Capacitor AdMob plugin üzerinden çalışır.
-// Gerçek ID'ler AdMob panelinden alınıp buraya yazılır.
+// CANLI ID'ler (PiyasaAI + MaçAI + Tuzak Radar)
 // ============================================================
-// Test ID'ler (yayın öncesi kullanılır, canlıda gerçek ID'lerle değiştir)
-// Android Rewarded: ca-app-pub-3940256099942544/5224354917
-// Android Banner:   ca-app-pub-3940256099942544/6300978111
-// iOS Rewarded:     ca-app-pub-3940256099942544/1712485313
-// iOS Banner:       ca-app-pub-3940256099942544/2934735716
-const TEST_REWARDED = 'ca-app-pub-3940256099942544/5224354917';
-const TEST_BANNER = 'ca-app-pub-3940256099942544/6300978111';
+const _REWARDED = 'ca-app-pub-6440512201259891/7187652032';
+const _BANNER = 'ca-app-pub-6440512201259891/6892138563';
 let currentConfig = {
-    rewardedUnitId: TEST_REWARDED,
-    bannerUnitId: TEST_BANNER,
-    appId: '',
+    rewardedUnitId: _REWARDED,
+    bannerUnitId: _BANNER,
+    appId: 'ca-app-pub-6440512201259891~8121881217',
 };
 let bannerVisible = false;
 export function configureAdMob(config) {
@@ -89,4 +84,3 @@ async function fallbackAd() {
         setTimeout(() => resolve(true), 5000);
     });
 }
-//# sourceMappingURL=admob.js.map

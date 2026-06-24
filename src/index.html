@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
@@ -1575,7 +1575,7 @@
 
   <script>
     const API_BASE = localStorage.getItem('api_base') || (location.hostname !== 'localhost' ? '/api' : 'http://localhost:3000');
-    const USE_API = localStorage.getItem('use_api') === 'true';
+    const USE_API = localStorage.getItem('use_api') !== 'false';
 
     function ageGateCheck(){
       if(localStorage.getItem('age_verified') === 'true') return;
@@ -1609,303 +1609,13 @@
       } catch { return null; }
     }
 
-    const marketData = [
-      {
-        id:"sol", symbol:"SOL", name:"Solana", market:"Global Kripto", kinds:["bull","watch"],
-        price:"$142.80", alpha:84, upProb:72, downProb:28, confidence:"Orta-Yüksek", risk:"Orta",
-        signal:"Boğa geçiş adayı", summary:"Trend kırılımına hacimli yaklaşım var.",
-        valid:"4 saat", source:"CoinGecko + Binance market data",
-        tags:["EMA20 üstü","Hacim x2.1","RSI 59","Direnç yakın"],
-        reasons:["Fiyat kısa vadeli ortalamaların üzerinde kalıyor.","Hacim artışı fiyat hareketini destekliyor.","RSI aşırı alımda değil, hareket alanı var.","Direnç üstü kapanışta skor 90+ bölgesine çıkabilir."]
-      },
-      {
-        id:"arb", symbol:"ARB", name:"Arbitrum", market:"Global Kripto", kinds:["bull"],
-        price:"$0.91", alpha:73, upProb:64, downProb:36, confidence:"Orta", risk:"Orta",
-        signal:"Dipten dönüş adayı", summary:"Düşüş sonrası momentum toparlanıyor.",
-        valid:"6 saat", source:"CoinGecko + OHLC",
-        tags:["RSI 48","Dip bölge","Hacim x1.4","Trend nötr+"],
-        reasons:["Aşırı satıştan çıkış bölgesi izleniyor.","Hacim henüz patlamadı ama toparlanma var.","Direnç teyidi gelmeden güçlü al sinyali sayılmaz.","Risk/ödül oranı izlemeye değer."]
-      },
-      {
-        id:"nova", symbol:"NOVA", name:"Nova Token", market:"Yeni DEX Token", kinds:["newcrypto","bear"],
-        price:"$0.0042", alpha:61, upProb:44, downProb:56, confidence:"Düşük", risk:"Yüksek",
-        signal:"Riskli pump alarmı", summary:"Hareket güçlü ama likidite ve holder riski zayıf.",
-        valid:"1 saat", source:"DEX Screener",
-        tags:["Yeni token","Likidite düşük","Holder riski","Pump riski"],
-        reasons:["Hacim artışı var fakat likidite düşük.","Yeni token olduğu için rug/pump riski yüksek.","Sosyal ilgi artışı fiyata yansımış olabilir.","Risk filtresi nedeniyle boğa adayı listesine alınmaz."]
-      },
-      {
-        id:"aix", symbol:"AIX", name:"AIx Launch", market:"Yeni Kripto", kinds:["newcrypto"],
-        price:"Liste öncesi", alpha:68, upProb:58, downProb:42, confidence:"Düşük-Orta", risk:"Yüksek",
-        signal:"Yaklaşan listeleme", summary:"AI temalı yeni token, ilk likidite sonrası skorlanacak.",
-        valid:"Listeleme günü", source:"Launchpad + DEX Screener",
-        tags:["3 gün sonra","AI teması","Likidite bekleniyor","Whitelist"],
-        reasons:["Henüz fiyat/hacim oluşmadı, bu yüzden kesin sinyal değil.","Listeleme sonrası ilk 30 dakika likidite takip edilmeli.","Kontrat doğrulama ve holder dağılımı kontrol edilmeden güçlü sinyal verilmez.","Tema güçlü ama ilk işlem riski yüksek."]
-      },
-      {
-        id:"betae", symbol:"BETAE", name:"Beta Enerji", market:"Yeni Hisse / Halka Arz", kinds:["ipo"],
-        price:"₺40.00 arz", alpha:66, upProb:60, downProb:40, confidence:"Düşük-Orta", risk:"Orta-Yüksek",
-        signal:"Halka arz takip adayı", summary:"Talep toplama sonrası ilk işlem hacmi izlenecek.",
-        valid:"İlk 3 işlem günü", source:"KAP/SPK + halka arz verisi",
-        tags:["Enerji sektörü","Bireysele eşit","Arz takvimi","İlk işlem takip"],
-        reasons:["Halka arzlarda fiyat geçmişi sınırlı olduğu için teknik sinyal oluşmaz.","İlk işlem günü hacim, tavan/çözülme ve emir derinliği izlenmeli.","Arz büyüklüğü ve sektör ilgisi alpha skorunu etkiler.","Kullanıcıya al demeyiz; ilk işlem sonrası takip senaryosu veririz."]
-      },
-      {
-        id:"thy", symbol:"THYAO", name:"Türk Hava Yolları", market:"BIST", kinds:["bull","watch"],
-        price:"₺301.50", alpha:70, upProb:62, downProb:38, confidence:"Orta", risk:"Orta",
-        signal:"Kapanış teyidi bekliyor", summary:"Hacim destekli trend pozitife dönüyor.",
-        valid:"Günlük kapanış", source:"BIST gecikmeli/EOD",
-        tags:["BIST","Hacim x1.25","RSI 55","Direnç takip"],
-        reasons:["Günlük kapanış tarafında pozitif görünüm var.","Hacim ortalamanın hafif üzerinde.","Direnç üstü kapanış sinyal gücünü artırır.","BIST verisi lisans durumuna göre gecikmeli gösterilir."]
-      },
-      {
-        id:"btctry", symbol:"BTCTRY", name:"Bitcoin / TL", market:"Yerli Borsa", kinds:["local","bull"],
-        price:"₺2.115M", alpha:78, upProb:67, downProb:33, confidence:"Orta", risk:"Orta",
-        signal:"Yerli talep güçleniyor", summary:"TRY paritesi hacmi globalden pozitif ayrışıyor.",
-        valid:"2 saat", source:"BtcTurk/Binance TR ticker",
-        tags:["TRY paritesi","Yerli hacim","Spread takip","Fiyat farkı"],
-        reasons:["Yerli borsada TRY tarafı hacimleniyor.","Global fiyatla yerli parite arasındaki fark takip edilebilir.","Spread açılırsa risk artar.","Bu veri arbitraj vaadi değil, piyasa talep göstergesidir."]
-      },
-      {
-        id:"ethtry", symbol:"ETHTRY", name:"Ethereum / TL", market:"Yerli Borsa", kinds:["local","bear"],
-        price:"₺103.800", alpha:49, upProb:43, downProb:57, confidence:"Orta", risk:"Orta",
-        signal:"Zayıf talep riski", summary:"Yerli hacim düşük, kısa vadede satış baskısı önde.",
-        valid:"2 saat", source:"BtcTurk/Paribu market data",
-        tags:["TRY paritesi","Hacim zayıf","RSI 47","Talep düşük"],
-        reasons:["Yerli paritede hacim zayıf kalıyor.","Global hareket yerli talep tarafından desteklenmiyor.","Düşüş ihtimali yükseliş ihtimalinden yüksek görünüyor.","Takip için hacim artışı beklenmeli."]
-      }
-    ];
+    const marketData = []
 
-    const marketCopy = {
-      all:["Alpha Radar","Herkesin verdiği fiyat değil; dikkat çeken adaylar."],
-      bull:["Boğa Adayları","Yükseliş ihtimali ve alpha skoru yüksek olanlar."],
-      bear:["Düşüş Riski","Satış baskısı, pump riski veya zayıf talep görünenler."],
-      newcrypto:["Yeni Kriptolar","Yeni listelenen, çıkacak veya listeleme bekleyen tokenlar."],
-      ipo:["Yeni Hisseler","Halka arz / yeni işlem görecek şirket takip ekranı."],
-      local:["Yerli Fırsatlar","TRY paritesi, yerli hacim ve fiyat farkı adayları."],
-      watch:["Takip Listesi","Kullanıcının takibe aldığı adaylar."]
-    };
+    const matchData = []
 
-    const matchData = [
-      {
-        id:"fb-ts", home:"Fenerbahçe", away:"Trabzonspor", league:"Süper Lig", time:"Canlı 63'", score:"1-0", filter:["six","live","ai"],
-        confidence:78, result:"1X", market:"Ev sahibi kaybetmez", ms:"1X", goals:"2.5 Üst eğilim", kg:"KG Var %58", scorePred:"2-1",
-        homeProb:56, drawProb:25, awayProb:19, risk:"Orta", source:"API-Football live + stats",
-        tags:["xG 1.42-0.51","Şut 11-4","Topla oynama %61","Canlı momentum"],
-        reasons:["Ev sahibi xG ve şut üstünlüğü kurmuş durumda.","Trabzonspor geçişlerde tehdit üretiyor, bu yüzden KG Var tamamen düşük değil.","Canlı kırmızı kart veya sakatlık olursa tahmin iptal/yeniden hesaplanır.","Bu analiz kesin sonuç değildir."]
-      },
-      {
-        id:"gs-kay", home:"Galatasaray", away:"Kayserispor", league:"Süper Lig", time:"20:00", score:"Başlamadı", filter:["six","ai","goals"],
-        confidence:74, result:"1 & 1.5 Üst", market:"Ev sahibi + gol", ms:"1", goals:"1.5 Üst %72", kg:"KG Yok %54", scorePred:"2-0",
-        homeProb:68, drawProb:20, awayProb:12, risk:"Orta", source:"API-Football fixtures + form",
-        tags:["Form 4G-1B","İç saha güçlü","Rakip eksik","1.5 üst"],
-        reasons:["Galatasaray iç saha formu ve hücum üretimiyle önde.","Rakibin deplasman savunma verisi zayıf.","KG Var yerine ev sahibi gol ağırlıklı senaryo daha mantıklı.","Kadro kesinleşmeden güven skoru sabit sayılmaz."]
-      },
-      {
-        id:"bjk-ads", home:"Beşiktaş", away:"Adana DS", league:"Süper Lig", time:"21:30", score:"Başlamadı", filter:["six","risk","goals"],
-        confidence:59, result:"KG Var", market:"Gollü ama riskli", ms:"Kararsız", goals:"2.5 Üst %55", kg:"KG Var %64", scorePred:"2-2",
-        homeProb:38, drawProb:29, awayProb:33, risk:"Yüksek", source:"API-Football + team form",
-        tags:["Savunma zayıf","KG eğilimi","MS belirsiz","Risk yüksek"],
-        reasons:["İki takımda da gol üretme potansiyeli var fakat maç sonucu tarafında güven düşük.","Savunma verileri KG Var pazarını destekliyor.","MS seçimi yerine gol pazarı daha anlamlı görünüyor.","Risk yüksek olduğu için güçlü maç listesine alınmaz."]
-      },
-      {
-        id:"ars-che", home:"Arsenal", away:"Chelsea", league:"Premier League", time:"18:30", score:"Başlamadı", filter:["six","ai"],
-        confidence:71, result:"1X", market:"Ev sahibi tarafı", ms:"1X", goals:"2.5 Alt/Üst sınır", kg:"KG Var %52", scorePred:"1-1 / 2-1",
-        homeProb:50, drawProb:28, awayProb:22, risk:"Orta", source:"API-Football standings + form",
-        tags:["Büyük maç","Tempo değişken","Ev avantajı","1X"],
-        reasons:["Ev sahibi form ve saha avantajı nedeniyle önde.","Derbi/büyük maç dinamiği sonucu zorlaştırıyor.","Tahmin skoru tek skor değil, senaryo aralığı olarak verilir.","Güven yüksek değil, kontrollü analiz."]
-      },
-      {
-        id:"real-sev", home:"Real Madrid", away:"Sevilla", league:"La Liga", time:"22:00", score:"Başlamadı", filter:["six","ai","goals"],
-        confidence:80, result:"1", market:"Güçlü ev sahibi", ms:"1", goals:"2.5 Üst %61", kg:"KG Yok %51", scorePred:"3-1",
-        homeProb:72, drawProb:18, awayProb:10, risk:"Düşük-Orta", source:"API-Football predictions + form",
-        tags:["Form üstün","Ev sahibi","Gol beklentisi","Güçlü güven"],
-        reasons:["Ev sahibi form, kadro kalitesi ve saha avantajı belirgin.","Sevilla savunma kırılganlığı gol beklentisini artırıyor.","Güven skoru günün en yükseklerinden biri.","Oran değişimi ve ilk 11 sonrası tekrar hesaplanmalı."]
-      },
-      {
-        id:"int-laz", home:"Inter", away:"Lazio", league:"Serie A", time:"Canlı 31'", score:"0-0", filter:["six","live","risk"],
-        confidence:62, result:"2. yarı gol", market:"Canlı gol bekleme", ms:"1X", goals:"1.5 Üst canlı", kg:"KG Düşük", scorePred:"1-0",
-        homeProb:57, drawProb:30, awayProb:13, risk:"Orta", source:"API-Football live stats",
-        tags:["Canlı 0-0","Şut az","2. yarı tempo","Sarı kart 2"],
-        reasons:["İlk yarı tempo düşük, fakat ev sahibi baskısı artıyor.","Canlı veri 2. yarı gol ihtimalini öne çıkarıyor.","Maç sonucu yerine canlı gol senaryosu izlenmeli.","Tempo artmazsa tahmin geçersizleşir."]
-      }
-    ];
-
-    const matchCopy = {
-      six:["Günün 6 Maçı","API verisinden seçilmiş, analiz değeri olan günlük limitli maçlar."],
-      live:["Canlı Maçlar","Skor, dakika, xG ve momentum canlı takip."],
-      ai:["AI Güçlü","Güven skoru 70+ olan maçlar."],
-      goals:["Gol Pazarı","KG, üst/alt ve skor senaryosu öne çıkan maçlar."],
-      risk:["Riskli Maç","Sonuç tahmini belirsiz, fakat izleme değeri olanlar."]
-    };
-
-    const newsData = [
-      {
-        id:"n1", type:["all","football","injury","impact"], icon:"📰",
-        title:"Galatasaray’da forvet belirsizliği",
-        summary:"Muhtemel ilk 11 değişikliği, maç sonucu güven skorunu %74’ten %68’e düşürebilir.",
-        tags:["Kadro","AI Etki","Süper Lig"], impact:"Tahmin güveni düşer"
-      },
-      {
-        id:"n2", type:["all","football","impact"], icon:"📊",
-        title:"Fenerbahçe maçında canlı xG farkı açılıyor",
-        summary:"Ev sahibi xG ve şut üstünlüğü nedeniyle canlı 1X senaryosu güçleniyor.",
-        tags:["Canlı","xG","Momentum"], impact:"Canlı tahmin güçlenir"
-      },
-      {
-        id:"n3", type:["all","market","impact"], icon:"🚀",
-        title:"Yeni AI token listeleme takvimi yaklaştı",
-        summary:"AIx Launch için ilk likidite ve holder dağılımı listeleme günü skorlanacak.",
-        tags:["Yeni Kripto","Listeleme","Risk"], impact:"Listeleme alarmı"
-      },
-      {
-        id:"n4", type:["all","market"], icon:"🏛️",
-        title:"Yeni halka arzda ilk işlem günü takip edilecek",
-        summary:"Talep yoğunluğu ve ilk 3 işlem günü hacmi alpha skorunu belirleyecek.",
-        tags:["Halka Arz","BIST","Yeni Hisse"], impact:"İlk işlem alarmı"
-      },
-      {
-        id:"n5", type:["all","injury","football"], icon:"⛑️",
-        title:"Premier League maçında savunma eksikleri",
-        summary:"Chelsea tarafında eksik savunma oyuncuları KG Var ihtimalini yükseltiyor.",
-        tags:["Sakatlık","Premier League","Gol Pazarı"], impact:"KG Var artar"
-      }
-    ];
-
-    const resultsData = [
-      {
-        id:"r1", home:"Beşiktaş", away:"Konyaspor", league:"Süper Lig", final:"2-1",
-        prediction:"1 & 1.5 Üst", status:"Tahmin tuttu", confidence:69,
-        tags:["MS 1","2.5 Üst","KG Var"], reasons:["Ev sahibi xG üstünlüğü skora yansıdı.","Maç önü 1 & 1.5 üst senaryosu doğru çalıştı.","AI maç sonrası raporu reklam sonrası açılır."]
-      },
-      {
-        id:"r2", home:"Roma", away:"Torino", league:"Serie A", final:"0-0",
-        prediction:"1X", status:"Kısmi tuttu", confidence:61,
-        tags:["1X tuttu","Gol tahmini zayıf"], reasons:["Maç sonucu tarafında risk korunmuş oldu.","Gol pazarı beklentisi karşılık bulmadı.","Tempo düşük kaldığı için canlı revizyon gerekirdi."]
-      },
-      {
-        id:"r3", home:"PSG", away:"Lyon", league:"Ligue 1", final:"3-1",
-        prediction:"1 & 2.5 Üst", status:"Tahmin tuttu", confidence:77,
-        tags:["MS 1","Üst tuttu","Güçlü güven"], reasons:["Ev sahibi baskısı erken golle başladı.","Şut ve xG üstünlüğü tahmini destekledi.","Günün başarılı yüksek güvenli analizlerinden biri."]
-      }
-    ];
-
-
-
-    const trapData = [
-      {
-        id:"t-nova", kind:"market", type:["all","market","pump"], title:"NOVA / Yeni DEX Token", subtitle:"Riskli pump alarmı",
-        score:74, crowd:88, data:41, trap:71, risk:"Yüksek", label:"Kalabalık pump’a koşuyor",
-        crowdView:"Fiyat +38%, sosyal ilgi yüksek, yeni token heyecanı var.",
-        dataView:"Likidite düşük, holder yoğunluğu riskli, hacim var ama alış kalitesi zayıf.",
-        result:"Uzak dur / sadece izle. Boğa adayı değil, riskli pump.",
-        tags:["Likidite tuzağı","Holder riski","Yeni token","Pump riski"],
-        ifThen:["Eğer likidite 250K$ üstüne çıkar ve holder dağılımı düzelirse risk azalır.","Eğer hacim düşerken fiyat şişmeye devam ederse tuzak skoru 85+ olur."]
-      },
-      {
-        id:"t-arb", kind:"market", type:["all","market","quiet"], title:"ARB / Arbitrum", subtitle:"Sessiz boğa hazırlığı",
-        score:79, crowd:32, data:76, trap:18, risk:"Orta", label:"Kalabalık henüz fark etmedi",
-        crowdView:"Fiyat yatay, sosyal ilgi düşük, büyük hareket yok gibi görünüyor.",
-        dataView:"Hacim tabanı yükseliyor, RSI toparlanıyor, satış baskısı azalıyor.",
-        result:"Sessiz izleme adayı. Kalabalık gelmeden önce alarm kurulmalı.",
-        tags:["Sessiz boğa","Hacim tabanı","RSI dönüş","Direnç alarmı"],
-        ifThen:["Eğer 0.94 üstü hacimli kapanış gelirse alpha skoru 88’e çıkar.","Eğer hacim düşer ve fiyat dip altına sarkarsa sinyal iptal olur."]
-      },
-      {
-        id:"t-sol", kind:"market", type:["all","market","quiet"], title:"SOL / Solana", subtitle:"Kırılım öncesi tuzak kontrolü",
-        score:82, crowd:67, data:81, trap:29, risk:"Orta", label:"Boğa güçlü ama teyit şart",
-        crowdView:"Kalabalık SOL tarafında pozitif, kısa vadeli boğa beklentisi var.",
-        dataView:"Hacim destekli trend var fakat direnç bölgesine yaklaşılmış durumda.",
-        result:"Boğa adayı; ama direnç üstü kapanış gelmeden agresif yorum yapılmaz.",
-        tags:["Direnç testi","Hacim x2.1","Boğa teyidi","İptal seviyesi"],
-        ifThen:["Eğer 145 üstü hacimli kalırsa boğa skoru güçlenir.","Eğer 139 altına hacimli iner ise sinyal iptal edilir."]
-      },
-      {
-        id:"t-gs", kind:"match", type:["all","match","lineup","odds"], title:"Galatasaray - Kayserispor", subtitle:"Favori / erken gol tuzağı",
-        score:72, crowd:84, data:58, trap:63, risk:"Orta-Yüksek", label:"Kalabalık farklı galibiyet bekliyor",
-        crowdView:"MS 1 ve 2.5 üst popüler. Kalabalık erken gol ve rahat galibiyet bekliyor.",
-        dataView:"Forvet belirsizliği, rakibin düşük blok oyunu ve ilk yarı tempo riski var.",
-        result:"MS 1 yerine 1 & 1.5 üst veya ikinci yarı gol daha kontrollü senaryo.",
-        tags:["Kadro tuzağı","Favori tuzağı","İlk yarı gol riski","Düşük blok"],
-        ifThen:["Eğer ilk 20 dakikada ev sahibi 5+ şut bulursa üst ihtimali artar.","Eğer ilk yarı xG 0.40 altında kalırsa 2.5 üst zayıflar."]
-      },
-      {
-        id:"t-bjk", kind:"match", type:["all","match","odds"], title:"Beşiktaş - Adana DS", subtitle:"KG Var kalabalık tuzağı",
-        score:69, crowd:79, data:52, trap:64, risk:"Yüksek", label:"Gol pazarı popüler ama riskli",
-        crowdView:"İki takım savunması zayıf göründüğü için KG Var çok popüler.",
-        dataView:"Maç sonucu belirsiz, tempo dalgalı ve ilk 11’e göre gol verisi değişebilir.",
-        result:"KG Var tek başına temiz değil. Canlı tempo görülmeden güçlü sayılmaz.",
-        tags:["KG Var tuzağı","Tempo riski","MS kararsız","Canlı bekle"],
-        ifThen:["Eğer ilk 15 dakikada iki taraf toplam 4+ şut bulursa KG güçlenir.","Eğer maç düşük tempoda başlarsa KG tuzak skoru 75+ olur."]
-      },
-      {
-        id:"t-inter", kind:"match", type:["all","match","live"], title:"Inter - Lazio", subtitle:"Canlı 0-0 gol tuzağı",
-        score:66, crowd:71, data:49, trap:59, risk:"Orta", label:"Canlı gol beklentisi acele olabilir",
-        crowdView:"0-0 devam ettiği için ikinci yarı gol beklentisi artıyor.",
-        dataView:"Şut az, xG düşük, tempo yükselmeden gol tahmini zayıf kalıyor.",
-        result:"Canlı gol için tempo teyidi beklenmeli. Sadece skor 0-0 diye üst alınmaz.",
-        tags:["Canlı tuzak","xG düşük","Tempo teyidi","2. yarı gol"],
-        ifThen:["Eğer 55. dakikaya kadar xG 0.90 üstüne çıkarsa gol ihtimali artar.","Eğer şut sayısı düşük kalırsa canlı gol sinyali iptal olur."]
-      }
-    ];
-
-    const trapCopy = {
-      all:["Tüm Tuzaklar","Kalabalık algısı ile veri sinyali ayrışan adaylar."],
-      market:["Piyasa Tuzakları","Pump, likidite, haber ve sessiz boğa ayrışmaları."],
-      match:["Maç Tuzakları","Favori, değer, kadro ve canlı momentum tuzakları."],
-      quiet:["Sessiz Boğa","Kalabalığın fark etmediği veri destekli adaylar."],
-      pump:["Riskli Pump","Yükselmiş görünen ama verisi zayıf adaylar."],
-      odds:["Değer Tuzağı","Popüler beklentinin yanıltıcı olduğu alanlar."],
-      lineup:["11 Tuzağı","İlk 11/sakatlık kaynaklı analiz bozulmaları."],
-      live:["Canlı Tuzak","Canlı skora bakıp acele karar verdiren durumlar."]
-    };
-
-
-    const weeklyData = [
-      {
-        id:"w1", day:"Pazartesi", home:"Fenerbahçe", away:"Sivasspor", league:"Süper Lig", final:"2-0",
-        prediction:"1X & 1.5 Üst", status:"Tuttu", type:["all","hit","league"], confidence:76,
-        tags:["1X tuttu","1.5 üst tuttu","Temiz skor"], reasons:["Ev sahibi baskısı erken başladı.","Savunma riski düşük kaldı.","AI güven skoru doğru çalıştı."]
-      },
-      {
-        id:"w2", day:"Salı", home:"Arsenal", away:"Chelsea", league:"Premier League", final:"1-1",
-        prediction:"1X", status:"Tuttu", type:["all","hit","league"], confidence:71,
-        tags:["1X tuttu","Derbi riski","Beraberlik"], reasons:["Ev sahibi kaybetmedi senaryosu doğruydu.","Derbi olduğu için MS 1 yerine 1X daha güvenliydi.","Gol pazarı kararsız kaldı."]
-      },
-      {
-        id:"w3", day:"Çarşamba", home:"Inter", away:"Lazio", league:"Serie A", final:"0-0",
-        prediction:"2. yarı gol", status:"Kaçtı", type:["all","miss"], confidence:62,
-        tags:["Canlı tahmin kaçtı","Tempo düşük","Gol yok"], reasons:["İkinci yarı tempo beklenen kadar yükselmedi.","Canlı şut verisi yanıltıcı kaldı.","Bu tip maçlarda güven skoru daha düşük tutulmalı."]
-      },
-      {
-        id:"w4", day:"Perşembe", home:"Real Madrid", away:"Sevilla", league:"La Liga", final:"3-1",
-        prediction:"1 & 2.5 Üst", status:"Tuttu", type:["all","hit","league"], confidence:80,
-        tags:["MS 1 tuttu","Üst tuttu","Güçlü güven"], reasons:["Ev sahibi form üstünlüğü belirgindi.","Sevilla savunma zayıflığı skora yansıdı.","Günün en temiz analizlerinden biri."]
-      },
-      {
-        id:"w5", day:"Cuma", home:"Beşiktaş", away:"Konyaspor", league:"Süper Lig", final:"2-1",
-        prediction:"1 & 1.5 Üst", status:"Tuttu", type:["all","hit","league"], confidence:69,
-        tags:["MS 1","1.5 üst","KG Var"], reasons:["Ev sahibi xG üstünlüğünü skora çevirdi.","1.5 üst pazarı güvenli çalıştı.","KG Var da desteklendi."]
-      },
-      {
-        id:"w6", day:"Cumartesi", home:"Roma", away:"Torino", league:"Serie A", final:"0-0",
-        prediction:"1X & 1.5 Üst", status:"Kısmi", type:["all","partial"], confidence:61,
-        tags:["1X tuttu","Gol kaçtı","Kısmi doğru"], reasons:["Maç sonucu tarafında risk korunmuş oldu.","Gol beklentisi karşılık bulmadı.","Düşük tempo maçları için ek filtre gerekli."]
-      },
-      {
-        id:"w7", day:"Pazar", home:"PSG", away:"Lyon", league:"Ligue 1", final:"3-1",
-        prediction:"1 & 2.5 Üst", status:"Tuttu", type:["all","hit"], confidence:77,
-        tags:["MS 1","Üst tuttu","Yüksek güven"], reasons:["Ev sahibi baskısı erken golle başladı.","Şut ve xG üstünlüğü tahmini destekledi.","Yüksek güvenli analiz doğru sonuçlandı."]
-      }
-    ];
-
-    const weeklyCopy = {
-      all:["Son 7 Gün","Oynanan maçlar ve analiz sonuçları."],
-      hit:["Tutanlar","Doğru çıkan analizler ve ortak sebepleri."],
-      miss:["Kaçanlar","Modelin yanıldığı maçlar ve iyileştirme notları."],
-      partial:["Kısmi Tutan","Bir pazarı doğru, diğer pazarı yanlış maçlar."],
-      league:["Lig Özeti","Liglere göre başarı ve risk ayrımı."]
-    };
+    const matchCopy = {}
+    const newsData = []
+    const resultsData = []
 
     const state = {
       page:"market",
@@ -2242,7 +1952,7 @@
       return state.unlocks[panel] && Date.now() < state.unlocks[panel];
     }
 
-    const ADMOB_UNIT_ID = 'ca-app-pub-3940256099942544/5224354917'; // Test ID
+    const ADMOB_UNIT_ID = 'ca-app-pub-6440512201259891/7187652032'; // Canlı ID
 
     function openAd(target){
       // VIP kullanıcı reklam görmez, direkt erişim ver

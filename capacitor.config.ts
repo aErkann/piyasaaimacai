@@ -10,7 +10,7 @@ const config: CapacitorConfig = {
       backgroundColor: '#03070b',
     },
     AdMob: {
-      appId: process.env.ADMOB_ANDROID_APP_ID || 'ca-app-pub-xxx~yyy',
+      appId: process.env.ADMOB_ANDROID_APP_ID || 'ca-app-pub-6440512201259891~8121881217',
     },
   },
 };
