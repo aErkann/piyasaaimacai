@@ -16,3 +16,5 @@ android/app/build/
 android/build/
 android/capacitor-cordova-android-plugins/
 android/CordovaLib/
+
+.vercel

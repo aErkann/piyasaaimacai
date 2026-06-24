@@ -1,0 +1,4 @@
+{
+  "outputDirectory": ".",
+  "ignoreCommand": "echo 'ignoring backend, node_modules, android'"
+}
