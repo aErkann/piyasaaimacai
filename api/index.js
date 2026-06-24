@@ -2,6 +2,7 @@
 const express = require('express');
 const { readFileSync, writeFileSync, existsSync } = require('fs');
 const { join } = require('path');
+const fetch = require('node-fetch');
 
 const app = express();
 app.use(express.json());
@@ -122,7 +123,9 @@ app.post('/api/vip/create-payment', async (req, res) => {
       body: JSON.stringify(productPayload),
     });
 
-    const data = await resp.json();
+    const text = await resp.text();
+    let data;
+    try { data = JSON.parse(text); } catch { data = { raw: text }; }
     if (resp.ok && data.payment_url) {
       res.json({ success: true, payment_url: data.payment_url });
     } else {
