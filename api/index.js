@@ -2,10 +2,21 @@
 const express = require('express');
 const { readFileSync, writeFileSync, existsSync } = require('fs');
 const { join } = require('path');
-// Use global fetch if available (Node 18+), otherwise node-fetch
-let _fetch;
-try { _fetch = globalThis.fetch; } catch { _fetch = require('node-fetch'); }
-const fetch = _fetch;
+const https = require('https');
+
+function httpsRequest(host, path, method, headers, body) {
+  return new Promise((resolve, reject) => {
+    const opts = { hostname: host, path, method, headers, port: 443 };
+    const req = https.request(opts, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => resolve(data));
+    });
+    req.on('error', reject);
+    if (body) req.write(body);
+    req.end();
+  });
+}
 
 const app = express();
 app.use(express.json());
@@ -130,25 +141,20 @@ app.post('/api/vip/create-payment', async (req, res) => {
       extra: JSON.stringify({ plan: 'monthly', deviceId: deviceId || '', timestamp: Date.now() }),
     };
 
-    let resp;
+    let body;
     try {
-      resp = await fetch('https://www.shopier.com/api/v1/product', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${pat}`,
-        },
-        body: JSON.stringify(productPayload),
-      });
+      body = await httpsRequest('www.shopier.com', '/api/v1/product', 'POST', {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${pat}`,
+      }, JSON.stringify(productPayload));
     } catch (fetchErr) {
-      console.error('[Shopier] Fetch error:', fetchErr.message);
+      console.error('[Shopier] Request error:', fetchErr.message);
       return res.status(500).json({ success: false, error: 'Shopier bağlantı hatası: ' + fetchErr.message });
     }
 
-    const text = await resp.text();
     let data;
-    try { data = JSON.parse(text); } catch { data = { raw: text }; }
-    if (resp.ok && data.payment_url) {
+    try { data = JSON.parse(body); } catch { data = { raw: body }; }
+    if (data.payment_url) {
       res.json({ success: true, payment_url: data.payment_url });
     } else {
       res.status(400).json({ success: false, error: data.message || 'Shopier hatası', detail: data });
