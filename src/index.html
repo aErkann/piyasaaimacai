@@ -894,6 +894,8 @@
       <button data-page="news">Haberler</button>
       <button data-page="results">Sonuçlar</button>
       <button data-page="weekly">Haftalık</button>
+      <button data-page="chat">AI Sohbet</button>
+      <button data-page="vipdash">VIP Panel</button>
       <button data-page="profile">Profil</button>
     </nav>
 
@@ -943,7 +945,7 @@
           </div>
         </div>
         <div class="hero-actions">
-          <button class="primary" onclick="openAd('market')">🎬 5 dk detay aç</button>
+          <button class="primary" onclick="openAd('market')">💎 VIP ile aç</button>
           <button class="ghost" onclick="openLegal()">Yasal</button>
         </div>
       </section>
@@ -1138,7 +1140,7 @@
           </div>
         </div>
         <div class="hero-actions">
-          <button class="primary" onclick="openAd('match')">🎬 5 dk analiz aç</button>
+          <button class="primary" onclick="openAd('match')">💎 VIP ile aç</button>
           <button class="ghost" onclick="openLegal()">Yasal</button>
         </div>
       </section>
@@ -1204,7 +1206,7 @@
           </div>
         </div>
         <div class="hero-actions">
-          <button class="primary" onclick="openAd('trap')">🎬 5 dk tuzak aç</button>
+          <button class="primary" onclick="openAd('trap')">💎 VIP ile aç</button>
           <button class="ghost" onclick="openLegal()">Yasal</button>
         </div>
       </section>
@@ -1273,7 +1275,7 @@
           </div>
         </div>
         <div class="hero-actions">
-          <button class="primary" onclick="openAd('news')">🎬 5 dk haber detayı</button>
+          <button class="primary" onclick="openAd('news')">💎 VIP ile aç</button>
           <button class="ghost" onclick="openLegal()">Yasal</button>
         </div>
       </section>
@@ -1312,7 +1314,7 @@
           </div>
         </div>
         <div class="hero-actions">
-          <button class="primary" onclick="openAd('results')">🎬 5 dk sonuç detayı</button>
+          <button class="primary" onclick="openAd('results')">💎 VIP ile aç</button>
           <button class="ghost" onclick="openLegal()">Yasal</button>
         </div>
       </section>
@@ -1348,7 +1350,7 @@
           </div>
         </div>
         <div class="hero-actions">
-          <button class="primary" onclick="openAd('weekly')">🎬 5 dk haftalık rapor</button>
+          <button class="primary" onclick="openAd('weekly')">💎 VIP ile aç</button>
           <button class="ghost" onclick="openLegal()">Yasal</button>
         </div>
       </section>
@@ -1425,6 +1427,98 @@
       </section>
     </section>
 
+    <!-- AI SOHBET (VIP) -->
+    <section class="page" id="chatPage">
+      <section class="hero">
+        <div class="hero-grid">
+          <div>
+            <span class="eyebrow">VIP'e Özel</span>
+            <h2>AI Sohbet<br><b>Asistanı.</b></h2>
+            <p>Piyasalar, maçlar, tuzaklar ve strateji hakkında yapay zekaya sor. Sınırsız kullanım.</p>
+          </div>
+          <div class="access">
+            <strong>💎</strong>
+            <small>VIP</small>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <button class="primary" onclick="if(!state.isVip)showVipModal()">💬 Sohbete başla</button>
+        </div>
+      </section>
+      <section class="engine" style="margin-top:12px">
+        <div id="chatBox" style="background:rgba(255,255,255,.03);border-radius:12px;padding:12px;max-height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;font-size:14px">
+          <div style="background:rgba(35,209,139,.1);padding:10px 14px;border-radius:12px 12px 12px 4px;max-width:85%;align-self:flex-start;color:var(--text)">Merhaba! Piyasalar, maç tahminleri veya tuzak sinyalleri hakkında sorabilirsin. 👋</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <input id="chatInput" placeholder="Sorunu yaz..." style="flex:1" onkeydown="if(event.key==='Enter')sendChat()" />
+          <button class="primary" onclick="sendChat()" style="padding:0 16px">Gönder</button>
+        </div>
+        <div id="chatSuggestions" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+          <button class="ghost" style="font-size:12px;padding:4px 12px" onclick="suggestChat('BTC son durum nedir?')">BTC son durum?</button>
+          <button class="ghost" style="font-size:12px;padding:4px 12px" onclick="suggestChat('Bu hafta hangi maçlar öne çıkıyor?')">Haftanın maçları?</button>
+          <button class="ghost" style="font-size:12px;padding:4px 12px" onclick="suggestChat('Tuzak sinyali var mı?')">Tuzak sinyali?</button>
+          <button class="ghost" style="font-size:12px;padding:4px 12px" onclick="suggestChat('Hangi hisseyi takip etmeliyim?')">Hangi hisse?</button>
+        </div>
+      </section>
+    </section>
+
+    <!-- VIP PANEL -->
+    <section class="page" id="vipdashPage">
+      <section class="hero">
+        <div class="hero-grid">
+          <div>
+            <span class="eyebrow">VIP Kontrol Merkezi</span>
+            <h2>Sinyal Odası<br><b>& Performans.</b></h2>
+            <p>Canlı sinyal akışı, kar/zarar takibi ve AI destekli portföy analizi.</p>
+          </div>
+          <div class="access">
+            <strong id="vipDashProfit">+%0</strong>
+            <small>Bu ay</small>
+          </div>
+        </div>
+      </section>
+      <section class="pulse">
+        <article><span>Sinyal</span><strong id="vipSignalCount">0</strong><small>Bu hafta</small></article>
+        <article><span>Tutan</span><strong id="vipHitRate">%0</strong><small>Başarı</small></article>
+        <article><span>P/L</span><strong id="vipPL">0 ₺</strong><small>Gerçekleşen</small></article>
+      </section>
+      <section class="warning" style="border-color:rgba(35,209,139,.2)">
+        <b>📊 VIP Sinyal Skoru:</b> AI, geçmiş veri ve canlı piyasa koşullarını analiz ederek sinyal üretir. Gerçek veri backend bağlantısı gerektirir.
+      </section>
+      <section class="engine">
+        <h3>🔥 Öne Çıkan Sinyaller</h3>
+        <div id="vipSignals" class="engine-grid">
+          <div class="engine-box" style="border-color:rgba(35,209,139,.3)">
+            <strong>📈 BTC/USD</strong><span>Alpha 89 — Yükseliş sinyali aktif</span>
+          </div>
+          <div class="engine-box" style="border-color:rgba(35,209,139,.3)">
+            <strong>⚽ GS - FB</strong><span>MaçAI güven: %84 — Ev sahibi avantajlı</span>
+          </div>
+          <div class="engine-box" style="border-color:rgba(255,93,122,.3)">
+            <strong>⚠️ ETH/USD</strong><span>Tuzak sinyali — Düşüş riski %67</span>
+          </div>
+          <div class="engine-box">
+            <strong>📊 THYAO</strong><span>BIST alpha: 72 — Yerli fırsat sinyali</span>
+          </div>
+        </div>
+      </section>
+      <section class="engine">
+        <h3>📅 Haftalık Kar/Zarar</h3>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center">
+          <div><strong style="font-size:11px;color:var(--muted)">Pzt</strong><span style="display:block;font-size:13px;color:var(--green)">+240₺</span></div>
+          <div><strong style="font-size:11px;color:var(--muted)">Sal</strong><span style="display:block;font-size:13px;color:var(--green)">+120₺</span></div>
+          <div><strong style="font-size:11px;color:var(--muted)">Çar</strong><span style="display:block;font-size:13px;color:var(--red)">-80₺</span></div>
+          <div><strong style="font-size:11px;color:var(--muted)">Per</strong><span style="display:block;font-size:13px;color:var(--green)">+360₺</span></div>
+          <div><strong style="font-size:11px;color:var(--muted)">Cum</strong><span style="display:block;font-size:13px;color:var(--green)">+90₺</span></div>
+          <div><strong style="font-size:11px;color:var(--muted)">Cmt</strong><span style="display:block;font-size:13px;color:var(--red)">-40₺</span></div>
+          <div><strong style="font-size:11px;color:var(--muted)">Paz</strong><span style="display:block;font-size:13px;color:var(--green)">+200₺</span></div>
+        </div>
+      </section>
+      <div style="padding:16px;text-align:center">
+        <button class="primary" onclick="if(!state.isVip)showVipModal()" style="width:100%">💎 Tüm sinyallere katıl</button>
+      </div>
+    </section>
+
     <!-- PROFIL / AYARLAR -->
     <section class="page" id="profilePage">
       <section class="hero results">
@@ -1489,18 +1583,6 @@
   </nav>
 
   <!-- MODALS -->
-  <div class="modal" id="adModal">
-    <div class="modal-card">
-      <div class="ad-visual"><span id="adTimer">⏳</span></div>
-      <h3 id="adTitle">🔒 Ücretsiz Sürüm</h3>
-      <p id="adText">Reklam tamamlanınca bu panel için 2 dakika detay erişimi ve 1 AI kredisi açılır.</p>
-      <div class="modal-actions" style="flex-direction:column;gap:6px">
-        <button class="primary" id="claimRewardBtn" disabled style="width:100%">Bekle...</button>
-        <button class="ghost" onclick="closeAd();showVipModal()" style="width:100%;border-color:rgba(35,209,139,.3);color:var(--green)">💎 VIP ol — sınırsız erişim <span class="vip-price">800 ₺</span>/ay</button>
-        <button class="ghost" id="cancelAdBtn" style="width:100%">Kapat</button>
-      </div>
-    </div>
-  </div>
 
   <div class="modal" id="detailModal">
     <div class="modal-card">
@@ -1538,24 +1620,25 @@
 
   <div class="modal" id="vipModal">
     <div class="modal-card" style="max-width:380px;text-align:center">
-      <div style="font-size:48px;margin-bottom:8px">💎</div>
-      <h3>VIP'e Özel</h3>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:4px">Reklamsız, sınırsız, tam yetkili. <span class="vip-price">800 ₺</span>/ay</p>
-      <p style="font-size:12px;color:var(--yellow);margin-bottom:16px">⭐ Ücretsiz kullanıcı: her panel için reklam + 2dk süre</p>
-      <div style="background:rgba(35,209,139,.08);border-radius:12px;padding:16px;margin-bottom:16px;text-align:left">
-        <div style="display:flex;justify-content:space-between;padding:4px 0"><span>🚫 Reklam</span><span style="color:var(--green)">Hiç yok</span></div>
-        <div style="display:flex;justify-content:space-between;padding:4px 0"><span>🤖 AI kredisi</span><span style="color:var(--green)">Sınırsız</span></div>
-        <div style="display:flex;justify-content:space-between;padding:4px 0"><span>📊 Panel detayı</span><span style="color:var(--green)">Anında erişim</span></div>
-        <div style="display:flex;justify-content:space-between;padding:4px 0"><span>🔓 Tüm veriler</span><span style="color:var(--green)">Tam açık</span></div>
-        <div style="display:flex;justify-content:space-between;padding:4px 0;border-top:1px solid rgba(255,255,255,.06);margin-top:4px;padding-top:6px"><span>💳 Ücretsiz</span><span style="color:var(--red)">Kısıtlı + reklam</span></div>
+      <div style="font-size:36px;margin-bottom:4px">💎</div>
+      <div id="vipCountdown" style="font-size:11px;color:var(--yellow);margin-bottom:8px;padding:4px 12px;background:rgba(255,209,102,.1);border-radius:20px;display:inline-block"></div>
+      <h3 style="margin:0 0 2px">VIP'e Özel Erişim</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Tüm paneller, AI asistan, sinyal odası ve sınırsız veri. <span class="vip-price">800 ₺</span>/ay</p>
+      <div style="background:rgba(35,209,139,.06);border-radius:12px;padding:12px;margin-bottom:12px;text-align:left;font-size:13px">
+        <div style="display:flex;justify-content:space-between;padding:3px 0"><span>🚫 Reklam + süre sınırı</span><span style="color:var(--green)">Tamamen kalktı</span></div>
+        <div style="display:flex;justify-content:space-between;padding:3px 0"><span>🤖 AI Sohbet Asistanı</span><span style="color:var(--green)">Sınırsız</span></div>
+        <div style="display:flex;justify-content:space-between;padding:3px 0"><span>📊 VIP Sinyal Odası</span><span style="color:var(--green)">Özel erişim</span></div>
+        <div style="display:flex;justify-content:space-between;padding:3px 0"><span>📈 Kar/Zarar Takibi</span><span style="color:var(--green)">Otomatik</span></div>
+        <div style="display:flex;justify-content:space-between;padding:3px 0"><span>🔔 Anlık Bildirim</span><span style="color:var(--green)">Öncelikli</span></div>
+        <div style="display:flex;justify-content:space-between;padding:3px 0;border-top:1px solid rgba(255,255,255,.06);margin-top:3px;padding-top:5px"><span>💳 Ücretsiz kullanıcı</span><span style="color:var(--red)">Veri yok</span></div>
       </div>
-      <input type="email" id="vipEmail" placeholder="E-posta adresiniz" style="margin-bottom:8px" />
-      <input type="tel" id="vipPhone" placeholder="Telefon (5xx...)" style="margin-bottom:12px" />
-      <div class="modal-actions" style="flex-direction:column;gap:8px">
+      <input type="email" id="vipEmail" placeholder="E-posta adresiniz" style="margin-bottom:6px" />
+      <input type="tel" id="vipPhone" placeholder="Telefon (5xx...)" style="margin-bottom:10px" />
+      <div class="modal-actions" style="flex-direction:column;gap:6px">
         <button class="primary vip-btn-price" onclick="purchaseVip()" style="width:100%;padding:14px;font-size:15px">💎 800 ₺ ile VIP Ol</button>
-        <button class="ghost" onclick="closeVipModal()" style="width:100%">İptal</button>
+        <button class="ghost" onclick="closeVipModal()" style="width:100%">Kapat</button>
       </div>
-      <p style="font-size:11px;color:var(--muted);margin-top:12px">Ödeme Shopier tarafından güvenli şekilde işlenir. Kart, mobil ödeme ve EFT ile ödeyebilirsiniz.</p>
+      <p style="font-size:10px;color:var(--muted);margin-top:8px">Ödeme Shopier güvencesiyle. Kart, mobil ödeme, EFT.</p>
     </div>
   </div>
 
@@ -1677,7 +1760,7 @@
     const $ = id => document.getElementById(id);
     const els = {
       marketCards:$("marketCards"), matchCards:$("matchCards"), newsList:$("newsList"), resultsList:$("resultsList"),
-      ad:$("adModal"), adTimer:$("adTimer"), claim:$("claimRewardBtn"), toast:$("toast"),
+      toast:$("toast"),
       detail:$("detailModal"), detailTitle:$("detailTitle"), detailText:$("detailText"), detailBullets:$("detailBullets"),
       legal:$("legalModal")
     };
@@ -1860,13 +1943,14 @@
                     "Haftalık maç raporu güncellendi";
       showToast(label);
     };
-    $("cancelAdBtn").onclick = closeAd;
-    $("claimRewardBtn").onclick = claimReward;
-
     function switchPage(page){
+      if (!state.isVip && (page === "chat" || page === "vipdash")) {
+        showVipModal();
+        return;
+      }
       state.page = page;
       document.querySelectorAll("#mainSegment button").forEach(b => b.classList.toggle("active", b.dataset.page === page));
-      ["market","match","trap","news","results","weekly","profile"].forEach(p => {
+      ["market","match","trap","news","results","weekly","chat","vipdash","profile"].forEach(p => {
         const el = $(p+"Page");
         if (el) el.classList.toggle("active", p === page);
       });
@@ -1877,6 +1961,8 @@
         news:["📰","Haber Merkezi","Piyasa ve maç etki haberleri"],
         results:["🏁","Sonuç Raporu","Tahmin ve gerçek sonuç karşılaştırması"],
         weekly:["📅","Haftalık Rapor","Son 7 gün maç sonuçları ve performans"],
+        chat:["💬","AI Sohbet Asistanı","VIP — Sınırsız AI destek"],
+        vipdash:["💎","VIP Sinyal Odası","VIP — Özel panel"],
         profile:["👤","Profil & Ayarlar","API, kredi ve uygulama bilgileri"]
       };
       $("brandLogo").textContent = titles[page][0];
@@ -1885,6 +1971,8 @@
       renderBottom();
       updateMinutes();
       if (page === "profile") renderProfile();
+      if (page === "vipdash") renderVipDash();
+      if (page === "chat") { if(!state.isVip) showVipModal(); }
     }
 
     function renderBottom(){
@@ -1896,6 +1984,8 @@
         news:[["📰","Haber"],["⚽","Maç"],["📈","Piyasa"],["🔥","Etki"]],
         results:[["🏁","Sonuç"],["✅","Tutan"],["⚠️","Risk"],["📊","Rapor"]],
         weekly:[["📅","Hafta"],["✅","Tutan"],["❌","Kaçan"],["📊","Lig"]],
+        chat:[["💬","Sohbet"],["💎","VIP"],["📊","Sinyal"],["👤","Profil"]],
+        vipdash:[["💎","Panel"],["📊","Sinyal"],["💬","Sohbet"],["👤","Profil"]],
         profile:[["👤","Profil"],["🔌","API"],["📜","Gizlilik"],["ℹ️","Hk"]]
       };
       const vipIcon = state.isVip ? '💎' : '';
@@ -1977,84 +2067,109 @@
         if (action === "lig") { state.weeklyFilter = "league"; syncTabFilter("weeklyTabs","league"); renderWeekly(); return; }
         return;
       }
+      if (page === "chat") {
+        if (action === "sohbet") { return; }
+        if (action === "vip") { showVipModal(); return; }
+        if (action === "sinyal") { switchPage("vipdash"); return; }
+        if (action === "profil") { switchPage("profile"); return; }
+        return;
+      }
+      if (page === "vipdash") {
+        if (action === "panel") { return; }
+        if (action === "sinyal") { return; }
+        if (action === "sohbet") { switchPage("chat"); return; }
+        if (action === "profil") { switchPage("profile"); return; }
+        return;
+      }
     }
 
     function openAiTab(){
-      showToast('🤖 AI sohbet için yukarıdaki AI sekmesine tıkla');
+      if (!state.isVip) { showVipModal(); return; }
+      switchPage("chat");
     }
 
     function unlocked(panel){
-      return state.unlocks[panel] && Date.now() < state.unlocks[panel];
+      return state.isVip || (state.unlocks[panel] && Date.now() < state.unlocks[panel]);
     }
 
-    const ADMOB_UNIT_ID = 'ca-app-pub-6440512201259891/7187652032'; // Canlı ID
-
     function openAd(target){
-      // VIP kullanıcı reklam görmez, direkt erişim ver
       if (state.isVip) {
         state.unlocks[target || state.page] = Date.now() + 365 * 24 * 60 * 60 * 1000;
         state.credits[target || state.page] += 5;
         showToast('✅ VIP — Sınırsız erişim');
         return;
       }
-      state.adTarget = target || state.page;
-      const names = {market:"PiyasaAI", match:"MaçAI", news:"Haberler", results:"Sonuçlar", weekly:"Haftalık", trap:"Tuzak Radar"};
-      $("adTitle").textContent = names[state.adTarget] || "Panel";
-      $("adText").textContent = "Reklam tamamlanınca bu panel için 2 dakika detay erişimi ve 1 AI kredisi açılır. 💎 VIP ile sınırsız kullanım.";
-      els.ad.classList.add("show");
-      els.claim.disabled = true;
-      els.claim.textContent = "Reklam yükleniyor...";
-      els.adTimer.textContent = "⏳";
-      startAdWatch();
+      showVipModal();
     }
 
-    async function startAdWatch(){
-      const isNative = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
-      if (isNative) {
-        try {
-          const { showRewardedAd } = await import('./api/admob.js');
-          const result = await showRewardedAd();
-          if (result) {
-            els.adTimer.textContent = "✓";
-            els.claim.disabled = false;
-            els.claim.textContent = "Ödülü al";
-            return;
-          }
-        } catch (e) {
-          console.warn('AdMob failed, fallback to timer:', e);
-        }
-      }
-      let s = 5;
-      els.adTimer.textContent = s;
-      clearInterval(state.timer);
-      state.timer = setInterval(() => {
-        s -= 1;
-        els.adTimer.textContent = s;
-        if(s <= 0){
-          clearInterval(state.timer);
-          els.adTimer.textContent = "✓";
-          els.claim.disabled = false;
-          els.claim.textContent = "Ödülü al";
-        }
+    const CHAT_RESPONSES = {
+      "btc":["Bitcoin şu anda $67,800 seviyesinde işlem görüyor. Teknik göstergeler: RSI 62 (nötr), MACD yükseliş sinyali veriyor. Alpha skoru: 74/100. Kısa vadede $69,500 direnci takip edilmeli."],
+      "maç":["Bu hafta öne çıkan maçlar: GS - FB (derbi, güven %84), Real - Barca (El Clasico, güven %71), Liverpool - City (güven %78). Detaylı analiz için VIP paneli kullanabilirsin."],
+      "tuzak":["Aktif tuzak sinyalleri: ETH/USD düşüş tuzağı (risk %67), THYAO sessiz boğa (alpha 72), GS - FB maçında değer tuzağı (oran 3.10). Detay için Tuzak Radar sayfasını aç."],
+      "hisse":["Bugün öne çıkan hisseler: THYAO (alpha 72, yerli fırsat), GARAN (alpha 68, temettü verimi), ASELS (alpha 71, savunma). Yeni halka arzlar için 'Yeni Hisse' filtresini kullan."],
+      "strategy":["Önerilen strateji: 1) Yüksek alpha (>75) ve düşük riskli varlıkları takip et, 2) Maç tahminlerinde ev sahibi avantajı ve kadro haberlerini kontrol et, 3) Tuzak sinyallerinde kalabalığın tersine hareket et."],
+      "default":"Piyasa verileri, maç tahminleri ve tuzak sinyalleri hakkında sorabilirsin. Örnek: 'BTC son durum?', 'Bu hafta hangi maçlar öne çıkıyor?', 'Tuzak sinyali var mı?'"
+    }
+
+    function sendChat(){
+      if (!state.isVip) { showVipModal(); return; }
+      const input = $("chatInput");
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = "";
+      const box = $("chatBox");
+      const userBubble = document.createElement("div");
+      userBubble.style.cssText = "background:rgba(64,169,255,.15);padding:10px 14px;border-radius:12px 12px 4px 12px;max-width:85%;align-self:flex-end;color:var(--text)";
+      userBubble.textContent = text;
+      box.appendChild(userBubble);
+      const lower = text.toLowerCase();
+      let reply = CHAT_RESPONSES.default;
+      if (lower.includes("btc") || lower.includes("bitcoin") || lower.includes("eth") || lower.includes("sol")) reply = CHAT_RESPONSES.btc;
+      else if (lower.includes("maç") || lower.includes("futbol") || lower.includes("gs") || lower.includes("fb") || lower.includes("bjk") || lower.includes("derbi")) reply = CHAT_RESPONSES.maç;
+      else if (lower.includes("tuzak") || lower.includes("sinyal") || lower.includes("risk")) reply = CHAT_RESPONSES.tuzak;
+      else if (lower.includes("hisse") || lower.includes("bist") || lower.includes("halka") || lower.includes("yatırım")) reply = CHAT_RESPONSES.hisse;
+      else if (lower.includes("strateji") || lower.includes("tavsiye") || lower.includes("nasıl")) reply = CHAT_RESPONSES.strategy;
+      setTimeout(() => {
+        const aiBubble = document.createElement("div");
+        aiBubble.style.cssText = "background:rgba(35,209,139,.1);padding:10px 14px;border-radius:12px 12px 12px 4px;max-width:85%;align-self:flex-start;color:var(--text)";
+        aiBubble.textContent = reply;
+        box.appendChild(aiBubble);
+        box.scrollTop = box.scrollHeight;
+      }, 600 + Math.random()*800);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function suggestChat(text){
+      $("chatInput").value = text;
+      sendChat();
+    }
+
+    let vipTimer = null;
+    function startVipCountdown(){
+      if (vipTimer) return;
+      const el = $("vipCountdown");
+      if (!el) return;
+      const end = Date.now() + 2 * 24 * 60 * 60 * 1000 + 43 * 60 * 60 * 1000 + 12 * 60 * 1000;
+      vipTimer = setInterval(() => {
+        const diff = end - Date.now();
+        if (diff <= 0) { clearInterval(vipTimer); el.textContent = "⏰ Fırsat sona erdi!"; return; }
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        el.textContent = `⏰ ${h}s ${m}d ${s}s kaldı — VIP fırsatı!`;
       }, 1000);
     }
+    setTimeout(startVipCountdown, 2000);
 
-    function closeAd(){
-      clearInterval(state.timer);
-      els.ad.classList.remove("show");
-      showToast("Reklam kapatıldı");
+    async function renderVipDash(){
+      if (!state.isVip) return;
+      const signals = (marketData.length + matchData.length + trapData.length);
+      $("vipSignalCount").textContent = signals || 24;
+      $("vipHitRate").textContent = "%" + (68 + Math.floor(Math.random() * 12));
+      $("vipPL").textContent = "+" + (180 + Math.floor(Math.random() * 420)) + " ₺";
+      $("vipDashProfit").textContent = "+%" + (8 + Math.floor(Math.random() * 15));
     }
-
-    function claimReward(){
-      // Ücretsiz: 2 dk erişim, 1 kredi
-      state.unlocks[state.adTarget] = Date.now() + 2 * 60 * 1000;
-      state.credits[state.adTarget] += 1;
-      els.ad.classList.remove("show");
-      showToast("✅ " + state.adTarget + " paneli 5 dk açıldı");
-      renderAll();
-      updateMinutes();
-      if(state.selected) setTimeout(() => openDetail(state.selectedType, state.selected), 200);
-    }
+    setInterval(renderVipDash, 30000);
 
     function getMarketList(){
       if(state.marketFilter === "all") return marketData;
@@ -2107,7 +2222,7 @@
               <button class="mini-ghost" onclick="toggleMarketWatch('${item.id}')">${state.marketWatch.has(item.id) ? "Takipte" : "Takibe al"}</button>
             </div>
           </div>
-          ${isOpen ? "" : `<div class="lock"><button onclick="openAd('market')">🔒 Alpha sebebi ve detay için reklam izle</button></div>`}
+          ${isOpen ? "" : `<div class="lock"><button onclick="openAd('market')">💎 Alpha detayı için VIP Ol</button></div>`}
         </article>
       `;
     }
@@ -2161,7 +2276,7 @@
               <button class="mini-ghost" onclick="toggleMatchWatch('${m.id}')">${state.matchWatch.has(m.id) ? "Takipte" : "Takibe al"}</button>
             </div>
           </div>
-          ${isOpen ? "" : `<div class="lock"><button onclick="openAd('match')">🔒 AI analiz ve istatistik için reklam izle</button></div>`}
+          ${isOpen ? "" : `<div class="lock"><button onclick="openAd('match')">💎 AI analiz için VIP Ol</button></div>`}
         </article>
       `;
     }
@@ -2184,7 +2299,7 @@
               <button class="mini-ghost">Kaydet</button>
             </div>
           </div>
-          ${isOpen ? "" : `<div class="lock"><button onclick="openAd('news')">🔒 Haber etki analizi için reklam izle</button></div>`}
+          ${isOpen ? "" : `<div class="lock"><button onclick="openAd('news')">💎 Haber etki analizi için VIP Ol</button></div>`}
         </article>
       `).join("");
       const titles = {
@@ -2220,7 +2335,7 @@
               <button class="mini-ghost">Arşivle</button>
             </div>
           </div>
-          ${isOpen ? "" : `<div class="lock"><button onclick="openAd('results')">🔒 Maç sonrası rapor için reklam izle</button></div>`}
+          ${isOpen ? "" : `<div class="lock"><button onclick="openAd('results')">💎 Maç sonrası rapor için VIP Ol</button></div>`}
         </article>
       `).join("");
     }
@@ -2287,7 +2402,7 @@
               <button class="mini-ghost">Alarm kur</button>
             </div>
           </div>
-          ${isOpen ? "" : `<div class="lock"><button onclick="openAd('trap')">🔒 Tuzak gerekçesi ve şartlar için reklam izle</button></div>`}
+          ${isOpen ? "" : `<div class="lock"><button onclick="openAd('trap')">💎 Tuzak detayı için VIP Ol</button></div>`}
         </article>
       `).join("");
     }
@@ -2323,7 +2438,7 @@
               <button class="mini-ghost">Arşivle</button>
             </div>
           </div>
-          ${isOpen ? "" : `<div class="lock"><button onclick="openAd('weekly')">🔒 Haftalık detay raporu için reklam izle</button></div>`}
+          ${isOpen ? "" : `<div class="lock"><button onclick="openAd('weekly')">💎 Haftalık rapor için VIP Ol</button></div>`}
         </article>
       `).join("");
     }
