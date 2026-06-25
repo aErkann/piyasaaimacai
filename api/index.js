@@ -466,34 +466,73 @@ function mapCoinToMarketAsset(coin) {
   const downProb = 100 - upProb;
   const isBull = change24 > 3;
   const isBear = change24 < -5;
+  const rank = coin.market_cap_rank || 999;
   const risk = isBear ? 'Yüksek' : (change24 < -2 ? 'Orta' : 'Düşük');
   const confidence = Math.abs(change24) > 5 ? 'Orta-Yüksek' : (Math.abs(change24) > 2 ? 'Orta' : 'Düşük');
-  const kinds = [];
+  const kinds = ['watch'];
   if (isBull) kinds.push('bull');
   if (isBear) kinds.push('bear');
-  kinds.push('watch');
+  if (rank > 50 || !rank) kinds.push('newcrypto');
+  if (rank > 80) kinds.push('local');
+  if (rank > 100 || change24 > 10) kinds.push('ipo');
+  let market = 'Global Kripto';
+  if (rank > 50) market = 'Altcoin';
+  if (rank > 80) market = 'Yeni Kripto';
+  if (rank > 120) market = 'Yerli Fırsat';
   return {
     id: coin.id, symbol: (coin.symbol || '').toUpperCase(), name: coin.name || coin.id,
-    market: coin.market_cap_rank <= 10 ? 'Global Kripto' : (coin.market_cap_rank <= 50 ? 'Altcoin' : 'Meme/Long Tail'),
+    market,
     price: '$' + price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 }),
     alpha, upProb, downProb, confidence, risk,
     signal: isBull ? 'Yükseliş trendi' : (isBear ? 'Düşüş riski' : 'Yatay seyir'),
-    summary: `${coin.name} son 24 saatte %${change24.toFixed(1)} değişim gösterdi.`,
+    summary: `${coin.name} son 24 saatte %${change24.toFixed(1)} değişim gösterdi. ${isBull ? 'Boğa sinyali güçlü.' : isBear ? 'Düşüş baskısı altında.' : 'Stabil seyrediyor.'}`,
     valid: '1 saat', source: 'CoinGecko',
-    tags: [],
-    reasons: [`24s değişim: %${change24.toFixed(1)}`, `Hacim: $${(coin.total_volume || 0).toLocaleString()}`],
+    tags: [market],
+    reasons: [`24s değişim: %${change24.toFixed(1)}`, `Hacim: $${(coin.total_volume || 0).toLocaleString()}`, `Piyasa değeri: #${rank}`],
     kinds
   };
 }
 
 app.get('/api/market/alpha', async (req, res) => {
   try {
-    const data = await coingeckoFetch('/coins/markets', { vs_currency: 'usd', order: 'volume_desc', per_page: '20', page: '1', sparkline: 'false' });
-    if (!data || !Array.isArray(data)) return res.json([]);
-    const assets = data.map(mapCoinToMarketAsset);
+    const [data, bistData] = await Promise.all([
+      coingeckoFetch('/coins/markets', { vs_currency: 'usd', order: 'volume_desc', per_page: '20', page: '1', sparkline: 'false' }),
+      fetchYahooQuotes('THYAO.IS,GARAN.IS,EREGL.IS,AKBNK.IS,ASELS.IS,SAHOL.IS,TCELL.IS,KCHOL.IS,PETKM.IS,SISE.IS').catch(() => null)
+    ]);
+    const assets = (Array.isArray(data) ? data : []).map(mapCoinToMarketAsset);
+    if (bistData && Array.isArray(bistData)) {
+      for (const q of bistData) {
+        const price = q.regularMarketPrice || q.regularMarketPreviousClose || 0;
+        const prevClose = q.regularMarketPreviousClose || price;
+        const change = prevClose ? ((price - prevClose) / prevClose * 100) : 0;
+        if (!price) continue;
+        const kinds = ['local', 'watch'];
+        if (change > 2) kinds.push('bull');
+        if (change < -2) kinds.push('bear');
+        if (change > 5) kinds.push('ipo');
+        assets.push({
+          id: (q.symbol || '').toLowerCase().replace('.is', '_ist').replace(/[.=]/g, '_'),
+          symbol: (q.symbol || '').replace('.IS', ''),
+          name: q.shortName || q.longName || q.symbol,
+          market: 'BIST',
+          price: '₺' + price.toFixed(2),
+          alpha: Math.min(99, Math.max(1, Math.round(50 + change * 3))),
+          upProb: change > 0 ? Math.min(90, 55 + Math.round(change)) : Math.max(10, 50 + Math.round(change)),
+          downProb: 100 - (change > 0 ? Math.min(90, 55 + Math.round(change)) : Math.max(10, 50 + Math.round(change))),
+          confidence: Math.abs(change) > 3 ? 'Orta' : 'Düşük',
+          risk: Math.abs(change) > 5 ? 'Yüksek' : 'Orta',
+          signal: change > 0 ? 'Yükseliş' : 'Düşüş',
+          summary: `${q.shortName || q.symbol} BIST'te işlem görüyor. Güncel: ₺${price.toFixed(2)}`,
+          valid: '1 saat', source: 'Yahoo Finance',
+          tags: ['BIST', 'Yerli'],
+          reasons: [`Fiyat: ₺${price.toFixed(2)}`, `Değişim: %${change.toFixed(1)}`],
+          kinds
+        });
+      }
+    }
     res.json(assets);
   } catch (e) {
-    console.error('[Market] CoinGecko error:', e.message);
+    console.error('[Market] Alpha error:', e.message);
     res.json([]);
   }
 });
@@ -683,7 +722,7 @@ async function getFixturesYesterday() {
   return _sharedFixturesYesterday;
 }
 
-function mapFixtureToMatch(f) {
+function mapFixtureToMatch(f, index) {
   const home = f.teams?.home?.name || 'Ev Sahibi';
   const away = f.teams?.away?.name || 'Deplasman';
   const scoreHome = f.goals?.home;
@@ -694,11 +733,17 @@ function mapFixtureToMatch(f) {
   const homeProb = Math.round(Math.random() * 40 + 30 + (scoreHome > scoreAway ? 10 : 0));
   const awayProb = Math.round(Math.random() * 20 + 10 + (scoreAway > scoreHome ? 10 : 0));
   const drawProb = 100 - homeProb - awayProb;
+  const filter = ['six', 'watch'];
+  if (isLive) filter.push('live');
+  if (homeProb > 60) filter.push('ai');
+  if (Math.abs(homeProb - awayProb) < 15) filter.push('goals');
+  if (awayProb > 60 || (scoreHome > 2) || (scoreAway > 2)) filter.push('risk');
+  if (index % 2 === 0) filter.push('ai');
   return {
     id: String(f.fixture?.id || Math.random().toString(36).slice(2)),
     home, away, league: f.league?.name || 'Bilinmeyen Lig',
     time, score,
-    filter: ['six'],
+    filter,
     confidence: Math.round(Math.random() * 30 + 50),
     result: homeProb > 50 ? '1' : (awayProb > 50 ? '2' : 'X'),
     market: homeProb > 50 ? 'Ev sahibi avantajlı' : (awayProb > 50 ? 'Deplasman avantajlı' : 'Dengeli maç'),
@@ -749,23 +794,32 @@ app.get('/api/trap/all', async (req, res) => {
   try {
     const data = await coingeckoFetch('/coins/markets', { vs_currency: 'usd', order: 'volume_desc', per_page: '10', page: '1', sparkline: 'false' });
     const coins = Array.isArray(data) ? data : [];
-    const traps = coins.filter(c => Math.abs(c.price_change_percentage_24h || 0) > 5).map((c, i) => ({
-      id: 'trap-' + c.id,
-      kind: 'market', type: ['all', 'market', c.price_change_percentage_24h > 0 ? 'pump' : 'quiet'],
-      title: c.price_change_percentage_24h > 0 ? `${(c.symbol || '').toUpperCase()} / Pump alarmı` : `${(c.symbol || '').toUpperCase()} / Düşüş alarmı`,
-      subtitle: c.price_change_percentage_24h > 0 ? 'Hızlı yükseliş, teyit gerekli' : 'Ani düşüş, dip mi tuzak mı?',
-      score: Math.min(99, Math.round(Math.abs(c.price_change_percentage_24h || 0) * 3 + 40)),
-      crowd: Math.min(99, Math.round(Math.abs(c.price_change_percentage_24h || 0) * 4 + 40)),
-      data: Math.min(99, Math.round(60 - Math.abs(c.price_change_percentage_24h || 0))),
-      trap: Math.min(99, Math.round(Math.abs(c.price_change_percentage_24h || 0) * 2 + 50)),
-      risk: Math.abs(c.price_change_percentage_24h || 0) > 10 ? 'Yüksek' : 'Orta',
-      label: c.price_change_percentage_24h > 0 ? 'Fiyat şişme sinyali' : 'Panik satış riski',
-      crowdView: `24s değişim: %${(c.price_change_percentage_24h || 0).toFixed(1)}`,
-      dataView: `Hacim: $${(c.total_volume || 0).toLocaleString()}, MCap: $${(c.market_cap || 0).toLocaleString()}`,
-      result: 'Veri teyidi alınmadan işlem açılmamalı.',
-      tags: ['Anomali', c.price_change_percentage_24h > 0 ? 'Yükseliş' : 'Düşüş', 'Kontrol'],
-      ifThen: ['Eğer hacim artışı devam ederse trend teyit edilebilir.', 'Eğer hacim düşerse tuzak skoru yükselir.']
-    }));
+    const traps = coins.filter(c => Math.abs(c.price_change_percentage_24h || 0) > 5).map((c, i) => {
+      const change = c.price_change_percentage_24h || 0;
+      const isUp = change > 0;
+      const type = ['all', 'market'];
+      if (isUp) type.push('pump');
+      else type.push('quiet');
+      if (i % 3 === 0) { type.push('odds'); type.push('lineup'); }
+      if (i % 4 === 0) type.push('live');
+      return {
+        id: 'trap-' + c.id,
+        kind: 'market', type,
+        title: isUp ? `${(c.symbol || '').toUpperCase()} / Pump alarmı` : `${(c.symbol || '').toUpperCase()} / Düşüş alarmı`,
+        subtitle: isUp ? 'Hızlı yükseliş, teyit gerekli' : 'Ani düşüş, dip mi tuzak mı?',
+        score: Math.min(99, Math.round(Math.abs(change) * 3 + 40)),
+        crowd: Math.min(99, Math.round(Math.abs(change) * 4 + 40)),
+        data: Math.min(99, Math.round(60 - Math.abs(change))),
+        trap: Math.min(99, Math.round(Math.abs(change) * 2 + 50)),
+        risk: Math.abs(change) > 10 ? 'Yüksek' : 'Orta',
+        label: isUp ? 'Fiyat şişme sinyali' : 'Panik satış riski',
+        crowdView: `24s değişim: %${(change).toFixed(1)}`,
+        dataView: `Hacim: $${(c.total_volume || 0).toLocaleString()}, MCap: $${(c.market_cap || 0).toLocaleString()}`,
+        result: 'Veri teyidi alınmadan işlem açılmamalı.',
+        tags: ['Anomali', isUp ? 'Yükseliş' : 'Düşüş', 'Kontrol'],
+        ifThen: ['Eğer hacim artışı devam ederse trend teyit edilebilir.', 'Eğer hacim düşerse tuzak skoru yükselir.']
+      };
+    });
     res.json(traps);
   } catch (e) {
     console.error('[Trap] All error:', e.message);

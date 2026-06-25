@@ -338,7 +338,7 @@
     .card{
       border:1px solid var(--line);
       border-radius:25px;
-      padding:14px;
+      padding:18px;
       background:linear-gradient(180deg,rgba(255,255,255,.078),rgba(255,255,255,.04));
       overflow:hidden;
       position:relative;
@@ -361,24 +361,24 @@
       align-items:center;
     }
     .icon{
-      width:44px;
-      height:44px;
+      width:48px;
+      height:48px;
       border-radius:16px;
       background:rgba(255,255,255,.09);
       display:grid;
       place-items:center;
       font-weight:950;
-      font-size:11px;
+      font-size:13px;
     }
-    .name strong{display:block;font-size:15px}
+    .name strong{display:block;font-size:16px}
     .name span{
       display:block;
       color:var(--muted);
-      font-size:12px;
+      font-size:13px;
       margin-top:2px;
     }
     .alpha{
-      font-size:12px;
+      font-size:14px;
       font-weight:950;
       padding:7px 9px;
       border-radius:999px;
@@ -451,11 +451,11 @@
       margin-top:12px;
     }
     .meta span{
-      font-size:11px;
+      font-size:12px;
       color:#b9cfdd;
       background:rgba(255,255,255,.065);
       border:1px solid rgba(255,255,255,.08);
-      padding:7px 8px;
+      padding:8px 10px;
       border-radius:999px;
     }
     .reason{
@@ -997,13 +997,13 @@
           <h3 id="marketListTitle">Alpha Radar</h3>
           <p id="marketListDesc">Sadece dikkat çeken adayları gösterir.</p>
         </div>
-        <span id="marketStatus">Demo tarama</span>
+        <span id="marketStatus">Canlı tarama</span>
       </section>
 
       <section class="cards" id="marketCards"></section>
 
       <!-- TradingView Chart -->
-      <section class="engine" id="tvChartSection" style="display:none">
+      <section class="engine" id="tvChartSection">
         <div class="section-head" style="cursor:pointer;margin-bottom:10px" onclick="document.getElementById('tvChartWrap').style.display=document.getElementById('tvChartWrap').style.display==='none'?'block':'none'">
           <h3>📈 Canlı Piyasa Grafiği</h3>
           <span id="tvChartToggle">▲</span>
@@ -1174,7 +1174,7 @@
           <h3 id="matchListTitle">Günün 6 Maçı</h3>
           <p id="matchListDesc">Sadece istatistiksel değeri olan maçlar seçilir.</p>
         </div>
-        <span id="matchStatus">Demo veri</span>
+        <span id="matchStatus">Canlı veri</span>
       </section>
 
       <section class="cards" id="matchCards"></section>
@@ -1243,7 +1243,7 @@
           <h3 id="trapTitle">Tüm Tuzaklar</h3>
           <p id="trapDesc">Kalabalık algısı ile veri sinyali ayrışan adaylar.</p>
         </div>
-        <span>Demo tuzak</span>
+        <span>Canlı tuzak</span>
       </section>
 
       <section class="cards" id="trapCards"></section>
@@ -1293,7 +1293,7 @@
           <h3 id="newsTitle">Tüm Haberler</h3>
           <p id="newsDesc">Haberler analiz etkisine göre öne çıkarılır.</p>
         </div>
-        <span>Demo akış</span>
+        <span>Canlı akış</span>
       </section>
 
       <section class="news-list" id="newsList"></section>
@@ -1330,7 +1330,7 @@
           <h3>Maç Sonuçları</h3>
           <p>Analiz ve gerçek sonuç karşılaştırması.</p>
         </div>
-        <span>Demo sonuç</span>
+        <span>Canlı sonuç</span>
       </section>
 
       <section class="cards result-row" id="resultsList"></section>
@@ -1384,7 +1384,7 @@
           <h3 id="weeklyTitle">Son 7 Gün</h3>
           <p id="weeklyDesc">Oynanan maçlar ve analiz sonuçları.</p>
         </div>
-        <span>Haftalık demo</span>
+        <span>Haftalık rapor</span>
       </section>
 
       <section class="engine">
@@ -2546,7 +2546,7 @@
       const current = localStorage.getItem('use_api') === 'true';
       if (current) {
         localStorage.setItem('use_api', 'false');
-        showToast('🔌 Demo moda geçildi');
+        showToast('🔌 Gerçek veri moduna geçildi');
       } else {
         localStorage.setItem('use_api', 'true');
         showToast('🔌 API moduna geçildi');
@@ -2590,14 +2590,20 @@
     async function loadApiData() {
       if (!USE_API) { hideLoading(); return; }
       try {
-        const [market, matches, traps, news, results] = await Promise.all([
+        const [market, matches, traps, news, results, local, ipo, newcrypto] = await Promise.all([
           apiGet('/market/alpha'),
           apiGet('/matches/daily-six'),
           apiGet('/trap/all'),
           apiGet('/news/impact'),
           apiGet('/results/daily'),
+          apiGet('/market/local'),
+          apiGet('/market/ipo'),
+          apiGet('/market/new-crypto'),
         ]);
         if (market && market.length) { marketData.length = 0; marketData.push(...market); }
+        if (local && local.length) { marketData.push(...local); }
+        if (ipo && ipo.length) { marketData.push(...ipo); }
+        if (newcrypto && newcrypto.length) { marketData.push(...newcrypto); }
         if (matches && matches.length) { matchData.length = 0; matchData.push(...matches); }
         if (traps && traps.length) { trapData.length = 0; trapData.push(...traps); }
         if (news && news.length) { newsData.length = 0; newsData.push(...news); }
