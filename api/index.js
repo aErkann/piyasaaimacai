@@ -346,6 +346,7 @@ const API_FOOTBALL_BASE = 'https://v3.football.api-sports.io';
 const ALPHA_VANTAGE_BASE = 'https://www.alphavantage.co/query';
 const FINNHUB_BASE = 'https://finnhub.io/api/v1';
 const FOOTBALL_DATA_BASE = 'https://api.football-data.org/v4';
+const SPORTMONKS_BASE = 'https://api.sportmonks.com/v3/football';
 const YAHOO_FINANCE_BASE = 'https://apidojo-yahoo-finance-v1.p.rapidapi.com';
 
 // In-memory cache for serverless function lifetime (per-invocation)
@@ -394,15 +395,22 @@ async function fetchFootballData(endpoint) {
   try { const r = await fetch(url, { headers: { 'X-Auth-Token': key } }); return await r.json(); } catch { return null; }
 }
 
-// Track API-Football rate limit - if depleted, fall back to Football-Data.org
+async function fetchSportMonks(endpoint) {
+  const token = process.env.SPORTMONKS_API_TOKEN || '';
+  if (!token) return null;
+  const url = `${SPORTMONKS_BASE}${endpoint}${endpoint.includes('?') ? '&' : '?'}api_token=${token}`;
+  try { const r = await fetch(url); const j = await r.json(); return j; } catch { return null; }
+}
+
+// Track API-Football rate limit - if depleted, fall back to Football-Data.org then SportMonks
 async function fetchSafeFixtures(date) {
   const afKey = process.env.API_FOOTBALL_KEY || '';
   const fdKey = process.env.FOOTBALL_DATA_ORG_KEY || '';
-  if (!afKey && !fdKey) return { response: [], results: 0 };
-  // Try API-Football first (richer data)
+  const smKey = process.env.SPORTMONKS_API_TOKEN || '';
+  if (!afKey && !fdKey && !smKey) return { response: [], results: 0 };
+  // Try API-Football first (richest data)
   if (afKey) {
     const cacheKey = `af:fixtures:${date}`;
-    // Check cache for today
     const today = new Date().toISOString().split('T')[0];
     if (date === today && __cache['af_today_fixtures']) return { response: __cache['af_today_fixtures'], results: __cache['af_today_fixtures'].length };
     const qs = date === 'live' ? 'live=all' : 'date=' + date;
@@ -415,10 +423,9 @@ async function fetchSafeFixtures(date) {
         return { response: json.response, results: json.response.length };
       }
       if (remaining <= 1 && fdKey) {
-        // Rate limit almost exhausted, try Football-Data.org fallback
         const fd = await fetchFootballData(fdKey && date === 'live' ? '/matches' : `/matches?date=${date}`);
         const fdMatches = fd?.matches || [];
-        if (fdMatches.length > 0) return { response: fdMatches.map(m => ({ fixture: { id: m.id, date: m.utcDate, status: { short: m.status === 'FINISHED' ? 'FT' : m.status === 'LIVE' ? '1H' : 'SCHEDULED', elapsed: null } }, teams: { home: { name: m.homeTeam?.name || '?' }, away: { name: m.awayTeam?.name || '?' } }, goals: { home: m.score?.fullTime?.home, away: m.score?.fullTime?.away }, league: { name: m.competition?.name || '?' }, fixture: { id: m.id } })), results: fdMatches.length };
+        if (fdMatches.length > 0) return mapFDFixtures(fdMatches);
       }
     } catch { /* fall through */ }
   }
@@ -426,9 +433,28 @@ async function fetchSafeFixtures(date) {
   if (fdKey) {
     const fd = await fetchFootballData(date === 'live' ? '/matches' : `/matches?date=${date}`);
     const fdMatches = fd?.matches || [];
-    if (fdMatches.length > 0) return { response: fdMatches.map(m => ({ fixture: { id: m.id, date: m.utcDate, status: { short: m.status === 'FINISHED' ? 'FT' : m.status === 'LIVE' ? '1H' : 'SCHEDULED', elapsed: null } }, teams: { home: { name: m.homeTeam?.name || '?' }, away: { name: m.awayTeam?.name || '?' } }, goals: { home: m.score?.fullTime?.home, away: m.score?.fullTime?.away }, league: { name: m.competition?.name || '?' } })), results: fdMatches.length };
+    if (fdMatches.length > 0) return mapFDFixtures(fdMatches);
+  }
+  // Fallback to SportMonks
+  if (smKey) {
+    const today = new Date().toISOString().split('T')[0];
+    const dateParam = date === 'live' ? today : date;
+    const sm = await fetchSportMonks(`/fixtures/date/${dateParam}?include=participants;scores;league`);
+    if (sm?.data && sm.data.length > 0) {
+      const mapped = sm.data.map(f => ({
+        fixture: { id: f.id, date: f.starting_at, status: { short: f.state?.name === 'Finished' ? 'FT' : f.state?.name === 'Live' ? '1H' : 'SCHEDULED', elapsed: f.minute } },
+        teams: { home: { name: f.participants?.[0]?.name || '?' }, away: { name: f.participants?.[1]?.name || '?' } },
+        goals: { home: f.scores?.find(s => s.type_id === 1)?.score?.home, away: f.scores?.find(s => s.type_id === 1)?.score?.away },
+        league: { name: f.league?.name || '?' }
+      }));
+      return { response: mapped, results: mapped.length };
+    }
   }
   return { response: [], results: 0 };
+}
+
+function mapFDFixtures(matches) {
+  return { response: matches.map(m => ({ fixture: { id: m.id, date: m.utcDate, status: { short: m.status === 'FINISHED' ? 'FT' : m.status === 'LIVE' ? '1H' : 'SCHEDULED', elapsed: null } }, teams: { home: { name: m.homeTeam?.name || '?' }, away: { name: m.awayTeam?.name || '?' } }, goals: { home: m.score?.fullTime?.home, away: m.score?.fullTime?.away }, league: { name: m.competition?.name || '?' } })), results: matches.length };
 }
 
 // Generate market assets from CoinGecko data
