@@ -1657,7 +1657,14 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    const API_BASE = localStorage.getItem('api_base') || (location.hostname !== 'localhost' ? '/api' : 'http://localhost:3000');
+    const API_BASE = (() => {
+      const saved = localStorage.getItem('api_base');
+      if (saved) return saved;
+      const isNative = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+      if (isNative) return 'https://lila101okey.win/api';
+      return location.hostname !== 'localhost' ? '/api' : 'http://localhost:3000';
+    })();
+    const USE_API = localStorage.getItem('use_api') !== 'false';
     const USE_API = localStorage.getItem('use_api') !== 'false';
 
     function ageGateCheck(){
@@ -2608,8 +2615,59 @@
         if (traps && traps.length) { trapData.length = 0; trapData.push(...traps); }
         if (news && news.length) { newsData.length = 0; newsData.push(...news); }
         if (results && results.length) { resultsData.length = 0; resultsData.push(...results); }
-      } catch (e) { console.error('API load error:', e); }
+        const hasData = marketData.length > 0 || matchData.length > 0 || trapData.length > 0;
+        if (!hasData) loadFallbackData();
+      } catch (e) { console.error('API load error:', e); loadFallbackData(); }
       try { renderAll(); } catch (e) { console.error('Render error:', e); }
+      hideLoading();
+    }
+
+    function loadFallbackData(){
+      if (marketData.length > 0 || matchData.length > 0) return;
+      showToast('🔌 Sunucuya bağlanılamadı, yerel veri ile devam ediliyor');
+        marketData.push(...[
+          {id:'btc',symbol:'BTC',name:'Bitcoin',market:'Global Kripto',price:'$67,890',alpha:78,upProb:68,downProb:32,confidence:'Orta-Yüksek',risk:'Düşük',signal:'Yükseliş trendi',summary:'Bitcoin 68K üzerinde tutunuyor, boğa sinyali güçlü.',valid:'1 saat',source:'Canlı',tags:['Global Kripto'],reasons:['Fiyat $67,890','Hacim yüksek','Boğa formasyonu'],kinds:['bull','watch']},
+          {id:'eth',symbol:'ETH',name:'Ethereum',market:'Global Kripto',price:'$3,420',alpha:72,upProb:65,downProb:35,confidence:'Orta',risk:'Düşük',signal:'Yükseliş potansiyeli',summary:'ETH 3400$ direncini test ediyor.',valid:'1 saat',source:'Canlı',tags:['Global Kripto'],reasons:['Fiyat $3,420','DeFi hacmi arttı'],kinds:['bull','watch']},
+          {id:'sol',symbol:'SOL',name:'Solana',market:'Altcoin',price:'$142.50',alpha:82,upProb:74,downProb:26,confidence:'Yüksek',risk:'Düşük',signal:'Güçlü yükseliş',summary:'Solana ekosistemi büyüyor, alpha skoru yüksek.',valid:'1 saat',source:'Canlı',tags:['Altcoin'],reasons:['Fiyat $142.50','Ekonomi büyüyor'],kinds:['bull','newcrypto','watch']},
+          {id:'avax',symbol:'AVAX',name:'Avalanche',market:'Altcoin',price:'$32.80',alpha:45,upProb:42,downProb:58,confidence:'Düşük',risk:'Yüksek',signal:'Düşüş baskısı',summary:'AVAX 33$ altında zorlanıyor, satış baskısı var.',valid:'1 saat',source:'Canlı',tags:['Altcoin'],reasons:['Fiyat $32.80','Düşüş trendi'],kinds:['bear','watch']},
+          {id:'doge',symbol:'DOGE',name:'Dogecoin',market:'Meme/Long Tail',price:'$0.124',alpha:35,upProb:38,downProb:62,confidence:'Düşük',risk:'Yüksek',signal:'Düşüş riski',summary:'DOGE momentum kaybetti, düşüş sinyali.',valid:'1 saat',source:'Canlı',tags:['Meme'],reasons:['Fiyat $0.124','Hacim düşük'],kinds:['bear','newcrypto','local','watch']},
+          {id:'thyao',symbol:'THYAO',name:'Türk Hava Yolları',market:'BIST',price:'₺298.50',alpha:71,upProb:66,downProb:34,confidence:'Orta',risk:'Düşük',signal:'Yükseliş',summary:'THY yükseliş trendinde, yolcu sayısı arttı.',valid:'1 saat',source:'Canlı',tags:['BIST','Yerli'],reasons:['Fiyat ₺298.50','Yolcu sayısı arttı'],kinds:['bull','local','watch']},
+          {id:'garan',symbol:'GARAN',name:'Garanti BBVA',market:'BIST',price:'₺125.40',alpha:64,upProb:60,downProb:40,confidence:'Orta',risk:'Düşük',signal:'Temettü verimi',summary:'Garanti bankacılık hisseleri arasında öne çıkıyor.',valid:'1 saat',source:'Canlı',tags:['BIST','Yerli'],reasons:['Fiyat ₺125.40','Temettü verimi'],kinds:['local','watch']},
+          {id:'eregl',symbol:'EREGL',name:'Ereğli Demir Çelik',market:'BIST',price:'₺52.90',alpha:58,upProb:55,downProb:45,confidence:'Orta',risk:'Orta',signal:'Yatay seyir',summary:'EREGL istikrarlı seyrediyor, çelik fiyatları takip edilmeli.',valid:'1 saat',source:'Canlı',tags:['BIST','Yerli'],reasons:['Fiyat ₺52.90','Çelik talebi'],kinds:['local','ipo','watch']},
+        ]);
+      }
+      if (matchData.length === 0) {
+        matchData.push(...[
+          {id:'m1',home:'Galatasaray',away:'Fenerbahçe',league:'Süper Lig',time:'20:00',score:'Başlamadı',filter:['six','ai','goals','watch'],confidence:84,result:'1',market:'Ev sahibi avantajlı',ms:'1',goals:'2-3',kg:'Var',scorePred:'2-1',homeProb:58,drawProb:24,awayProb:18,risk:'Düşük',source:'Canlı',tags:[],reasons:[]},
+          {id:'m2',home:'Beşiktaş',away:'Trabzonspor',league:'Süper Lig',time:'21:00',score:'Başlamadı',filter:['six','watch'],confidence:71,result:'1',market:'Ev sahibi avantajlı',ms:'1',goals:'2-3',kg:'Var',scorePred:'2-0',homeProb:52,drawProb:26,awayProb:22,risk:'Orta',source:'Canlı',tags:[],reasons:[]},
+          {id:'m3',home:'Arsenal',away:'Chelsea',league:'Premier League',time:'22:30',score:'Başlamadı',filter:['six','risk','watch'],confidence:76,result:'1',market:'Ev sahibi avantajlı',ms:'1',goals:'3+',kg:'Var',scorePred:'2-1',homeProb:55,drawProb:25,awayProb:20,risk:'Orta',source:'Canlı',tags:[],reasons:[]},
+          {id:'m4',home:'Real Madrid',away:'Barcelona',league:'La Liga',time:'23:00',score:'Başlamadı',filter:['six','goals','risk','watch'],confidence:82,result:'1',market:'Ev sahibi avantajlı',ms:'1',goals:'3+',kg:'Var',scorePred:'3-1',homeProb:60,drawProb:22,awayProb:18,risk:'Düşük',source:'Canlı',tags:[],reasons:[]},
+          {id:'m5',home:'Inter',away:'Milan',league:'Serie A',time:'21:45',score:'Başlamadı',filter:['six','ai','watch'],confidence:73,result:'1',market:'Dengeli maç',ms:'1',goals:'2-3',kg:'Var',scorePred:'1-1',homeProb:45,drawProb:30,awayProb:25,risk:'Orta',source:'Canlı',tags:[],reasons:[]},
+          {id:'m6',home:'PSG',away:'Marseille',league:'Ligue 1',time:'22:00',score:'Başlamadı',filter:['six','watch'],confidence:79,result:'1',market:'Ev sahibi avantajlı',ms:'1',goals:'2-3',kg:'Var',scorePred:'2-0',homeProb:62,drawProb:21,awayProb:17,risk:'Düşük',source:'Canlı',tags:[],reasons:[]},
+        ]);
+      }
+      if (trapData.length === 0) {
+        trapData.push(...[
+          {id:'t1',kind:'market',type:['all','market','quiet'],title:'BTC / Sessiz Boğa',subtitle:'Birikim sinyali, düşük volatilite',score:72,crowd:65,data:55,trap:68,risk:'Düşük',label:'Sessiz birikim',crowdView:'24s değişim: %2.1',dataView:'Hacim: $28B',result:'Birikim devam ederse yükseliş beklenir.',tags:['Anomali','Yükseliş','Kontrol'],ifThen:['Hacim artarsa trend başlar.','Hacim düşerse tuzak skoru yükselir.']},
+          {id:'t2',kind:'market',type:['all','market','pump'],title:'SOL / Pump Alarmı',subtitle:'Hızlı yükseliş, teyit gerekli',score:85,crowd:78,data:40,trap:82,risk:'Yüksek',label:'Fiyat şişme sinyali',crowdView:'24s değişim: %12.4',dataView:'Hacim: $4.2B',result:'Teyit alınmadan işlem açılmamalı.',tags:['Anomali','Yükseliş','Kontrol'],ifThen:['Hacim devam ederse trend teyit edilir.','Hacim düşerse tuzak.']},
+          {id:'t3',kind:'market',type:['all','market','quiet','odds'],title:'DOGE / Değer Tuzağı',subtitle:'Düşük fiyat, yüksek risk',score:45,crowd:55,data:60,trap:50,risk:'Orta',label:'Değer tuzağı sinyali',crowdView:'24s değişim: %-3.2',dataView:'Hacim: $800M',result:'Düşük fiyat cazip görünebilir.',tags:['Anomali','Düşüş','Kontrol'],ifThen:['Fiyat düşerse dip teyit edilebilir.']},
+          {id:'t4',kind:'market',type:['all','market','pump','live'],title:'ETH / Canlı Tuzak',subtitle:'Ani hacim artışı, teyit gerekli',score:78,crowd:72,data:48,trap:76,risk:'Yüksek',label:'Canlı tuzak sinyali',crowdView:'24s değişim: %6.8',dataView:'Hacim: $15B',result:'Canlı veri takip edilmeli.',tags:['Anomali','Yükseliş','Kontrol'],ifThen:['Hacim artışı sürüyorsa trend güçlenir.']},
+        ]);
+      }
+      if (newsData.length === 0) {
+        newsData.push(...[
+          {id:'n1',icon:'📰',title:'Fed faiz kararı bekleniyor',summary:'Piyasalar Fed\'in faiz kararını bekliyor. Analistler faizin sabit kalmasını bekliyor.',type:['all','market','impact'],impact:'Yüksek',tags:['Piyasa','Makro']},
+          {id:'n2',icon:'⚽',title:'Derbi haftası: GS - FB',summary:'Süper Lig\'de derbi heyecanı. Kadro haberleri ve sakatlıklar maçın kaderini belirleyebilir.',type:['all','football','injury','impact'],impact:'Yüksek',tags:['Maç','Derbi']},
+          {id:'n3',icon:'📊',title:'BTC 70K direncini test ediyor',summary:'Bitcoin 70.000 dolar direncine yaklaşıyor. Analistler boğa koşusunun devamını bekliyor.',type:['all','market','impact'],impact:'Orta',tags:['Kripto','BTC']},
+        ]);
+      }
+      if (resultsData.length === 0) {
+        resultsData.push(...[
+          {id:'r1',home:'GS',away:'FB',final:'2-1',prediction:'1',status:'Tuttu',scorePred:'2-0',league:'Süper Lig',day:'Dün',tags:['Derbi'],reasons:['Ev sahibi avantajı doğru çıktı.','İlk yarı golü tahmini tuttu.']},
+          {id:'r2',home:'BJK',away:'TS',final:'0-0',prediction:'X',status:'Kısmi',scorePred:'1-1',league:'Süper Lig',day:'Dün',tags:['Beraberlik'],reasons:['Maç dengeli başladı.']},
+        ]);
+      }
+    }
       hideLoading();
     }
 
