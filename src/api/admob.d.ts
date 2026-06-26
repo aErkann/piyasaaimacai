@@ -1,4 +1,4 @@
-export declare type BannerPosition = 'bottom' | 'top';
+export type BannerPosition = 'bottom' | 'top';
 export interface AdMobConfig {
     rewardedUnitId: string;
     bannerUnitId: string;

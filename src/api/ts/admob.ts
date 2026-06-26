@@ -1,10 +1,11 @@
 // ============================================================
 // AdMob Rewarded Video + Banner Entegrasyonu
-// Capacitor AdMob plugin üzerinden çalışır.
+// @capacitor-community/admob (v6) üzerinden çalışır.
 // Gerçek ID'ler AdMob panelinden alınıp buraya yazılır.
 // ============================================================
 
 // CANLI AdMob ID'leri (PiyasaAI + MaçAI + Tuzak Radar)
+// Android App ID:   ca-app-pub-6440512201259891~8121881217
 // Android Rewarded: ca-app-pub-6440512201259891/7187652032
 // Android Banner:   ca-app-pub-6440512201259891/6892138563
 
@@ -26,6 +27,7 @@ let currentConfig: AdMobConfig = {
 };
 
 let bannerVisible = false;
+let initialized = false;
 
 export function configureAdMob(config: Partial<AdMobConfig>) {
   if (config.rewardedUnitId) currentConfig.rewardedUnitId = config.rewardedUnitId;
@@ -33,36 +35,47 @@ export function configureAdMob(config: Partial<AdMobConfig>) {
   if (config.appId) currentConfig.appId = config.appId;
 }
 
+async function ensureInitialized() {
+  if (initialized) return;
+  const { AdMob } = await import('@capacitor-community/admob');
+  await AdMob.initialize({});
+  initialized = true;
+}
+
 export async function showRewardedAd(): Promise<boolean> {
-  if (isNative()) {
+  if (!isNative()) return fallbackAd();
+  try {
+    await ensureInitialized();
+    const { AdMob, RewardAdPluginEvents } = await import('@capacitor-community/admob');
+    let rewarded = false;
+    const rewardListener = await AdMob.addListener(
+      RewardAdPluginEvents.Rewarded,
+      () => { rewarded = true; }
+    );
     try {
-      const { RewardedAd } = await import(
-        /* webpackIgnore: true */
-        '@capacitor-community/admob'
-      );
-      await RewardedAd.prepare({ adId: currentConfig.rewardedUnitId });
-      const result = await RewardedAd.show();
-      return result ? result.adReward?.amount > 0 : false;
-    } catch (err) {
-      console.warn('[AdMob] Rewarded ad failed, fallback:', err);
-      return fallbackAd();
+      await AdMob.prepareRewardVideoAd({ adId: currentConfig.rewardedUnitId });
+      const item = await AdMob.showRewardVideoAd();
+      if (item && typeof item.amount === 'number' && item.amount > 0) rewarded = true;
+    } finally {
+      await rewardListener.remove();
     }
+    return rewarded;
+  } catch (err) {
+    console.warn('[AdMob] Rewarded ad failed, fallback:', err);
+    return fallbackAd();
   }
-  return fallbackAd();
 }
 
 export async function showBanner(position: BannerPosition = 'bottom'): Promise<void> {
   if (!isNative()) return;
   if (bannerVisible) return;
   try {
-    const { BannerAd } = await import(
-      /* webpackIgnore: true */
-      '@capacitor-community/admob'
-    );
-    await BannerAd.show({
+    await ensureInitialized();
+    const { AdMob, BannerAdPosition, BannerAdSize } = await import('@capacitor-community/admob');
+    await AdMob.showBanner({
       adId: currentConfig.bannerUnitId,
-      position: position === 'top' ? 'TOP_CENTER' : 'BOTTOM_CENTER',
-      size: 'ADAPTIVE_BANNER',
+      position: position === 'top' ? BannerAdPosition.TOP_CENTER : BannerAdPosition.BOTTOM_CENTER,
+      adSize: BannerAdSize.ADAPTIVE_BANNER,
     });
     bannerVisible = true;
   } catch (err) {
@@ -74,11 +87,8 @@ export async function hideBanner(): Promise<void> {
   if (!isNative()) return;
   if (!bannerVisible) return;
   try {
-    const { BannerAd } = await import(
-      /* webpackIgnore: true */
-      '@capacitor-community/admob'
-    );
-    await BannerAd.hide();
+    const { AdMob } = await import('@capacitor-community/admob');
+    await AdMob.hideBanner();
     bannerVisible = false;
   } catch (err) {
     console.warn('[AdMob] Banner hide failed:', err);

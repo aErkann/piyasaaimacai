@@ -1432,17 +1432,17 @@
       <section class="hero">
         <div class="hero-grid">
           <div>
-            <span class="eyebrow">VIP'e Özel</span>
+            <span class="eyebrow">Her soru öncesi reklam</span>
             <h2>AI Sohbet<br><b>Asistanı.</b></h2>
-            <p>Piyasalar, maçlar, tuzaklar ve strateji hakkında yapay zekaya sor. Sınırsız kullanım.</p>
+            <p>Piyasalar, maçlar, tuzaklar ve strateji hakkında yapay zekaya sor. Her soruda kısa bir reklam izlenir, 💎 VIP'te reklamsız.</p>
           </div>
           <div class="access">
-            <strong>💎</strong>
-            <small>VIP</small>
+            <strong>📺</strong>
+            <small>Reklamlı</small>
           </div>
         </div>
         <div class="hero-actions">
-          <button class="primary" onclick="if(!state.isVip)showVipModal()">💬 Sohbete başla</button>
+          <button class="primary" onclick="document.getElementById('chatInput').focus()">💬 Sohbete başla</button>
         </div>
       </section>
       <section class="engine" style="margin-top:12px">
@@ -1951,7 +1951,7 @@
       showToast(label);
     };
     function switchPage(page){
-      if (!state.isVip && (page === "chat" || page === "vipdash")) {
+      if (!state.isVip && page === "vipdash") {
         showVipModal();
         return;
       }
@@ -1968,7 +1968,7 @@
         news:["📰","Haber Merkezi","Piyasa ve maç etki haberleri"],
         results:["🏁","Sonuç Raporu","Tahmin ve gerçek sonuç karşılaştırması"],
         weekly:["📅","Haftalık Rapor","Son 7 gün maç sonuçları ve performans"],
-        chat:["💬","AI Sohbet Asistanı","VIP — Sınırsız AI destek"],
+        chat:["💬","AI Sohbet Asistanı","Her soru öncesi reklam · VIP'te reklamsız"],
         vipdash:["💎","VIP Sinyal Odası","VIP — Özel panel"],
         profile:["👤","Profil & Ayarlar","API, kredi ve uygulama bilgileri"]
       };
@@ -1979,7 +1979,6 @@
       updateMinutes();
       if (page === "profile") renderProfile();
       if (page === "vipdash") renderVipDash();
-      if (page === "chat") { if(!state.isVip) showVipModal(); }
     }
 
     function renderBottom(){
@@ -2091,7 +2090,6 @@
     }
 
     function openAiTab(){
-      if (!state.isVip) { showVipModal(); return; }
       switchPage("chat");
     }
 
@@ -2118,8 +2116,28 @@
       "default":"Piyasa verileri, maç tahminleri ve tuzak sinyalleri hakkında sorabilirsin. Örnek: 'BTC son durum?', 'Bu hafta hangi maçlar öne çıkıyor?', 'Tuzak sinyali var mı?'"
     }
 
-    function sendChat(){
-      if (!state.isVip) { showVipModal(); return; }
+    function appendChatReply(reply){
+      const box = $("chatBox");
+      const aiBubble = document.createElement("div");
+      aiBubble.style.cssText = "background:rgba(35,209,139,.1);padding:10px 14px;border-radius:12px 12px 12px 4px;max-width:85%;align-self:flex-start;color:var(--text)";
+      aiBubble.textContent = reply;
+      box.appendChild(aiBubble);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function resolveChatReply(text){
+      const lower = text.toLowerCase();
+      if (lower.includes("btc") || lower.includes("bitcoin") || lower.includes("eth") || lower.includes("sol")) return CHAT_RESPONSES.btc;
+      if (lower.includes("maç") || lower.includes("futbol") || lower.includes("gs") || lower.includes("fb") || lower.includes("bjk") || lower.includes("derbi")) return CHAT_RESPONSES.maç;
+      if (lower.includes("tuzak") || lower.includes("sinyal") || lower.includes("risk")) return CHAT_RESPONSES.tuzak;
+      if (lower.includes("hisse") || lower.includes("bist") || lower.includes("halka") || lower.includes("yatırım")) return CHAT_RESPONSES.hisse;
+      if (lower.includes("strateji") || lower.includes("tavsiye") || lower.includes("nasıl")) return CHAT_RESPONSES.strategy;
+      return CHAT_RESPONSES.default;
+    }
+
+    let chatAdInProgress = false;
+    async function sendChat(){
+      if (chatAdInProgress) return;
       const input = $("chatInput");
       const text = input.value.trim();
       if (!text) return;
@@ -2129,21 +2147,44 @@
       userBubble.style.cssText = "background:rgba(64,169,255,.15);padding:10px 14px;border-radius:12px 12px 4px 12px;max-width:85%;align-self:flex-end;color:var(--text)";
       userBubble.textContent = text;
       box.appendChild(userBubble);
-      const lower = text.toLowerCase();
-      let reply = CHAT_RESPONSES.default;
-      if (lower.includes("btc") || lower.includes("bitcoin") || lower.includes("eth") || lower.includes("sol")) reply = CHAT_RESPONSES.btc;
-      else if (lower.includes("maç") || lower.includes("futbol") || lower.includes("gs") || lower.includes("fb") || lower.includes("bjk") || lower.includes("derbi")) reply = CHAT_RESPONSES.maç;
-      else if (lower.includes("tuzak") || lower.includes("sinyal") || lower.includes("risk")) reply = CHAT_RESPONSES.tuzak;
-      else if (lower.includes("hisse") || lower.includes("bist") || lower.includes("halka") || lower.includes("yatırım")) reply = CHAT_RESPONSES.hisse;
-      else if (lower.includes("strateji") || lower.includes("tavsiye") || lower.includes("nasıl")) reply = CHAT_RESPONSES.strategy;
-      setTimeout(() => {
-        const aiBubble = document.createElement("div");
-        aiBubble.style.cssText = "background:rgba(35,209,139,.1);padding:10px 14px;border-radius:12px 12px 12px 4px;max-width:85%;align-self:flex-start;color:var(--text)";
-        aiBubble.textContent = reply;
-        box.appendChild(aiBubble);
-        box.scrollTop = box.scrollHeight;
-      }, 600 + Math.random()*800);
       box.scrollTop = box.scrollHeight;
+
+      const reply = resolveChatReply(text);
+
+      // VIP: reklamsız, anında cevap
+      if (state.isVip) {
+        setTimeout(() => appendChatReply(reply), 500 + Math.random()*600);
+        return;
+      }
+
+      // Ücretsiz kullanıcı: her cevaptan önce ödüllü reklam zorunlu
+      chatAdInProgress = true;
+      const pending = document.createElement("div");
+      pending.style.cssText = "background:rgba(64,169,255,.08);padding:10px 14px;border-radius:12px;max-width:85%;align-self:flex-start;color:var(--muted);font-size:13px";
+      pending.textContent = "📺 Cevabın açılması için kısa bir reklam izleniyor...";
+      box.appendChild(pending);
+      box.scrollTop = box.scrollHeight;
+
+      let rewarded = false;
+      try {
+        const { showRewardedAd } = await import('./api/admob.js');
+        rewarded = await showRewardedAd();
+      } catch (e) {
+        console.warn('Rewarded ad error:', e);
+        rewarded = false;
+      }
+      pending.remove();
+      chatAdInProgress = false;
+
+      if (rewarded) {
+        appendChatReply(reply);
+      } else {
+        const warn = document.createElement("div");
+        warn.style.cssText = "background:rgba(255,93,122,.12);padding:10px 14px;border-radius:12px;max-width:85%;align-self:flex-start;color:var(--text);font-size:13px";
+        warn.textContent = "⚠️ Cevabı görmek için reklamı sonuna kadar izlemelisin. Reklamsız kullanım için 💎 VIP ol.";
+        box.appendChild(warn);
+        box.scrollTop = box.scrollHeight;
+      }
     }
 
     function suggestChat(text){
